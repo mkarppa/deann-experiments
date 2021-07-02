@@ -1,0 +1,10 @@
+rsp:
+  constructor: RandomSamplingPermuted
+  query: 
+  - 50000
+  - 51000
+  - 52000
+  - 53000
+  - 54000
+  - 55000
+
