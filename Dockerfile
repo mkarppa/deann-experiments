@@ -17,6 +17,7 @@ RUN git clone https://github.com/maumueller/rehashing && cd rehashing/hbe && \
     mkdir build && cd build && cmake ../lib/eigen-git-mirror && cd ../lib/config4cpp && make && cd ../.. && \
     cmake . && make
 
+ENV PATH="/rehashing/hbe/:${PATH}"
 
 WORKDIR /app/
 

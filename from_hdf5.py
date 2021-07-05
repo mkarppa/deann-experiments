@@ -5,29 +5,26 @@ import numpy as np
 
 
 def check_dirs(ds_name):
-    for d in ['external', 'external/rehashing', 'external/rehashing/resources',
-                  'external/rehashing/resources/data']:
+    for d in ['/rehashing', '/rehashing/resources',
+                  '/rehashing/resources/data']:
         if not os.path.isdir(d):
             raise NotADirectoryError(d)
 
 
 def get_dataset_fn(dataset):
-    if not os.path.exists('external/rehashing/resources/data'):
-        os.mkdir('external/rehashing/resources/data')
-    if not os.path.exists('external/rehashing/resources/queries'):
-        os.mkdir('external/rehashing/resources/queries')
-    if not os.path.exists('external/rehashing/resources/exact'):
-        os.mkdir('external/rehashing/resources/exact')
-    return (os.path.join('external/rehashing/resources', 'data', '%s.txt' % dataset),
-            os.path.join('external/rehashing/resources', 'queries', '%s.txt' % dataset),
-            os.path.join('external/rehashing/resources', 'data', '%s.conf' % dataset),
-            os.path.join('external/rehashing/resources', 'exact', '%s_exp.txt' % dataset),
+    if not os.path.exists('/rehashing/resources/data'):
+        os.mkdir('/rehashing/resources/data')
+    if not os.path.exists('/rehashing/resources/queries'):
+        os.mkdir('/rehashing/resources/queries')
+    if not os.path.exists('/rehashing/resources/exact'):
+        os.mkdir('/rehashing/resources/exact')
+    return (os.path.join('/rehashing/resources', 'data', '%s.txt' % dataset),
+            os.path.join('/rehashing/resources', 'queries', '%s.txt' % dataset),
+            os.path.join('/rehashing/resources', 'data', '%s.conf' % dataset),
+            os.path.join('/rehashing/resources', 'exact', '%s_exp.txt' % dataset),
             )
 
 
-# def write_data(ds_name, dataset, X):
-
-    
 # def write_data(name, data, queries, ground_truth):
 #     data_fn, query_fn, _, groundtruth_fn = get_dataset_fn(name)
 #     print(get_dataset_fn(name))
@@ -74,13 +71,7 @@ def write_config(name, n, d, m, bw):
     f.close()
 
 
-    
-def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: python {sys.argv[0]} <file>")
-        exit(1)
-
-    fn = sys.argv[1]
+def create_dataset(fn):
     ds_name = fn.split("/")[-1][:-5]
     check_dirs(ds_name)
 
@@ -90,9 +81,16 @@ def main():
                             'kde.validation.0001', 'kde.validation.00001',
                             'kde.test.01', 'kde.test.001',
                             'kde.test.0001', 'kde.test.00001']:
-            np.savetxt(f'external/rehashing/resources/data/{ds_name}' +
+            np.savetxt(f'/rehashing/resources/data/{ds_name}' +
                            f'.{dataset}.csv',
                            np.array(f[dataset]), delimiter=',')
+    
+def main():
+    if len(sys.argv) != 2:
+        print(f"Usage: python {sys.argv[0]} <file>")
+        exit(1)
+
+    create_dataset(sys.argv[1])
 
     
 
