@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument('--query-set', default = None, type=str,
                             choices = ['validation','test'])
     parser.add_argument('--max-err', default = None, type=float)
-    parser.add_argument('-o', default = None, type=str)
+    parser.add_argument('-o', default = None, type=str, help='output as csv')
     args = parser.parse_args()
     
     for f in get_all_results():
