@@ -4,39 +4,23 @@ import sys
 import numpy as np
 
 
-def check_dirs(ds_name):
-    for d in ['/rehashing', '/rehashing/resources',
-                  '/rehashing/resources/data']:
-        if not os.path.isdir(d):
-            raise NotADirectoryError(d)
+def create_dirs():
+    hbe_path = os.environ['HBE']
+    if not os.path.exists(os.path.join(os.sep, hbe_path, 'resources', 'data')):
+        os.mkdir(os.path.join(os.sep, hbe_path, 'resources', 'data'))
+    if not os.path.exists(os.path.join(os.sep, hbe_path, 'resources', 'queries')):
+        os.mkdir(os.path.join(os.sep, hbe_path, 'resources', 'queries'))
+    if not os.path.exists(os.path.join(os.sep, hbe_path, 'resources', 'exact')):
+        os.mkdir(os.path.join(os.sep, hbe_path, 'resources', 'exact'))
 
 
 def get_dataset_fn(dataset):
-    if not os.path.exists('/rehashing/resources/data'):
-        os.mkdir('/rehashing/resources/data')
-    if not os.path.exists('/rehashing/resources/queries'):
-        os.mkdir('/rehashing/resources/queries')
-    if not os.path.exists('/rehashing/resources/exact'):
-        os.mkdir('/rehashing/resources/exact')
-    return (os.path.join('/rehashing/resources', 'data', '%s.txt' % dataset),
-            os.path.join('/rehashing/resources', 'queries', '%s.txt' % dataset),
-            os.path.join('/rehashing/resources', 'data', '%s.conf' % dataset),
-            os.path.join('/rehashing/resources', 'exact', '%s_exp.txt' % dataset),
+    hbe_path = os.path.join(os.environ['HBE'], 'resources')
+    return (os.path.join(hbe_path, 'data', '%s.txt' % dataset),
+            os.path.join(hbe_path, 'queries', '%s.txt' % dataset),
+            os.path.join(hbe_path, 'data', '%s.conf' % dataset),
+            os.path.join(hbe_path, 'exact', '%s_exp.txt' % dataset),
             )
-
-
-# def write_data(name, data, queries, ground_truth):
-#     data_fn, query_fn, _, groundtruth_fn = get_dataset_fn(name)
-#     print(get_dataset_fn(name))
-#     with open(data_fn, 'w') as f:
-#         for i, v in enumerate(data):
-#             f.write(str(i) + "," + ",".join(map(str, v)) + "\n")
-#     with open(query_fn, 'w') as f:
-#         for i, v in enumerate(queries):
-#             f.write(str(i) + "," + ",".join(map(str, v)) + "\n")
-#     with open(groundtruth_fn, 'w') as f:
-#         for i, val in enumerate(ground_truth):
-#             f.write(f'{val},{i}\n')
 
 
 def write_config(name, n, d, m, bw):
@@ -72,8 +56,11 @@ def write_config(name, n, d, m, bw):
 
 
 def create_dataset(fn):
+    if 'HBE' not in os.environ:
+        print('Error: Please set environmental variable HBE to point to your HBE installation')
+        exit(1)
     ds_name = fn.split("/")[-1][:-5]
-    check_dirs(ds_name)
+    create_dirs()
 
     with h5py.File(fn, 'r') as f:
         for dataset in ['train', 'validation', 'test',
@@ -81,7 +68,7 @@ def create_dataset(fn):
                             'kde.validation.0001', 'kde.validation.00001',
                             'kde.test.01', 'kde.test.001',
                             'kde.test.0001', 'kde.test.00001']:
-            np.savetxt(f'/rehashing/resources/data/{ds_name}' +
+            np.savetxt(f'/{os.environ["HBE"]}/resources/data/{ds_name}' +
                            f'.{dataset}.csv',
                            np.array(f[dataset]), delimiter=',')
     

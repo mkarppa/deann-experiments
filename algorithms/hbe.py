@@ -17,10 +17,7 @@ class RSEstimator(BaseEstimator):
         self.query_set = query_set
         self.mu = '{:f}'.format(mu).strip('0')
         self.h = h
-
-        if not os.path.exists(os.path.join(os.sep, "rehashing", "resources", "data", f'{dataset}.{query_set}.conf')):
-            print("Creating dataset")
-            from_hdf5.create_dataset(get_dataset_fn(dataset))
+        from_hdf5.create_dataset(get_dataset_fn(dataset))
 
     def fit(self, X):
         # pass # do nothing
@@ -56,7 +53,7 @@ class RSEstimator(BaseEstimator):
 
 
     def write_conf(self, f):
-        data_dir = '/rehashing/resources/data'
+        data_dir = os.path.join(os.environ['HBE'], 'resources', 'data')
         config  =  'exp {\n'
         config += f'    name = "{self.dataset}";\n'
         config += f'    fpath = "{data_dir}/{self.dataset}.train.csv";\n'
@@ -77,17 +74,11 @@ class RSEstimator(BaseEstimator):
         config += f'    tau = "{self.tau:f}";\n'
         config +=  '    beta = "0.5";\n'
         config +=  '}\n'
-        # with open(self.conf_filename,'w') as f:
         f.write(config)
         f.flush()
 
     def process_results(self, results):
         regex = r"RESULT id=(\d+) est=(\S+) samples=(.*) time=(\S+)"
-        # ids = []
-        # ests = []
-        # samples = []
-        # times = []
-        # print(self.result.split("\n"))
         processed_results = {
             'iter' : [],
             'id' : [],
@@ -103,17 +94,12 @@ class RSEstimator(BaseEstimator):
             for line in result.split('\n'): # self.result.split("\n"):
                 # print(line)
                 if m := re.match(regex, line):
-                    # ids.append(int(m.group(1)))
-                    # ests.append(float(m.group(2)))
-                    # samples.append(int(m.group(3)))
-                    # times.append(float(m.group(4)))
                     processed_results['iter'].append(i)
                     id = int(m.group(1))
                     processed_results['id'].append(id)
                     processed_results['est'].append(float(m.group(2)))
                     processed_results['samples'].append(float(m.group(3)))
                     processed_results['time'].append(float(m.group(4)))
-        #return (ids, ests, samples, times)
         return pd.DataFrame(processed_results)
 
     def name(self):
