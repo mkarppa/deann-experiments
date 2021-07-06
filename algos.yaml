@@ -2,24 +2,14 @@ ann-faiss:
   constructor: ANNFaiss
   wrapper: deann_wrapper
   query:
-  - - 10
-    - 0
-    - 512
-    - 1
+  - [[10, 50], [0, 50, 100], [512], [1, 5, 10, 50]]
 hbe:
   args:
     binary: hbe
   constructor: HBEEstimator
   wrapper: hbe 
   query:
-  - - 0.75
-    - 0.001
-  - - 1.0
-    - 0.001
-  - - 2.0
-    - 0.001
-  - - 3.0
-    - 0.001
+  - [[0.75, 1.0, 2.0, 3.0], [0.0001]]
 naive:
   constructor: Naive
   wrapper: deann_wrapper

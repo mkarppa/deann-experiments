@@ -10,6 +10,7 @@ import h5py
 import numpy as np
 import pandas as pd
 import time
+import json
 
 
 def get_result_fn(dataset, mu, query_set, algo):
@@ -118,10 +119,15 @@ def main():
         mod = __import__(f'algorithms.{definitions[algo]["wrapper"]}', fromlist=[definitions[algo]['constructor']])
         Est_class = getattr(mod, definitions[algo]['constructor'])
         est = Est_class(dataset_name, args.query_set, mu, bw, definitions[algo].get('args', {}))
-        for query_param in definitions[algo].get('query', [None]):
-            est.set_query_param(query_param)
-            if args.force or not os.path.exists(get_result_fn(dataset_name, mu, args.query_set, est)):
-                exps.setdefault(algo, []).append(query_param)
+        for query_params in definitions[algo].get('query', [None]):
+            if type(query_params) == list and type(query_params[0]) == list:
+                qps = product(*query_params)
+            else:
+                qps = [query_params]
+            for qp in qps: 
+                est.set_query_param(qp)
+                if args.force or not os.path.exists(get_result_fn(dataset_name, mu, args.query_set, est)):
+                    exps.setdefault(algo, []).append(qp)
 
 
 
