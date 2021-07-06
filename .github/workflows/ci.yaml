@@ -15,4 +15,4 @@ jobs:
         
     - name: Run experiments on shuffle
       run: | 
-        docker -v "$(pwd)":/app/:rw -t deann-experiments python run_exp.py
+        docker run -v "$(pwd)":/app/:rw -t deann-experiments python run_exp.py
