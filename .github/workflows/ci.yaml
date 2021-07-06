@@ -1,4 +1,4 @@
-name: Billion-Scale ANN Benchmarks
+name: Deann Experiments 
 
 on: [push, pull_request]
 
