@@ -23,9 +23,13 @@ The following repository contains the infrastructure to benchmark different KDE 
 | SVHN    |   531,131 | 3072  |
 
 Each dataset is automatically preprocessed from its raw definition, including bandwidth selection for mean kde values of `0.00001` to `0.01` in steps of `10`.
+This happens when running the experiment for the first time on a dataset, or can be invoked explicitly by running 
 
+```
+$ python preprocess_dataset.py --dataset shuffle --compute-bandwidth
+```
 
-## Workflow
+## Intended workflow
 
 ### Installation
 
@@ -71,6 +75,12 @@ produces a csv file containing results of all runs. The `--help` argument shows 
 ### Running locally
 
 In case that you have a setup that supports running `deann` and `hbe` locally, you do not need to go through the docker environment. Take a look at `Dockerfile` to see which libraries are necessary. In particular, note that `hbe` needs to have an environmental variable set to point at its installation path.
+
+## Evaluation
+
+![](misc/table.png)
+
+
 
 ## Reference
 
