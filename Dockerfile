@@ -18,6 +18,7 @@ RUN git clone https://github.com/maumueller/rehashing && cd rehashing/hbe && \
     cmake . && make
 
 ENV PATH="/rehashing/hbe/:${PATH}"
+ENV HBE="/rehashing/"
 
 WORKDIR /app/
 
