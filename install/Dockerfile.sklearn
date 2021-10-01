@@ -1,0 +1,10 @@
+FROM continuumio/miniconda3:latest
+
+RUN conda install -y scikit-learn pyyaml h5py pandas
+
+WORKDIR /home/app
+COPY cmd_runner.py preprocess_datasets.py result.py ./
+
+
+ENTRYPOINT ["python3", "-u", "cmd_runner.py"]
+

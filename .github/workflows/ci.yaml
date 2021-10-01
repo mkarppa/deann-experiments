@@ -11,12 +11,14 @@ jobs:
 
     - name: Install 
       run: |
-        docker build . -t deann-experiments
+          pip install pydocker
+          python3 install.py
+        
         
     - name: Run experiments on shuffle
       run: | 
-        docker run -v "$(pwd)":/app/:rw -t deann-experiments python run_exp.py
-        docker run -v "$(pwd)":/app/:rw -t deann-experiments python data_export.py -o res.csv
-         docker run -v "$(pwd)":/app/:rw -t deann-experiments python additional/tabulate_results.py -i res.csv show-best
+          python run_exp.py --algorithm hbe
+          python run_exp.py --algorithm deann
+          python run_exp.py --algorithm sklearn
 
 

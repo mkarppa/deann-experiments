@@ -1,4 +1,6 @@
 import os
+
+from cmd_runner import run_from_cmdline
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from itertools import product
@@ -7,18 +9,105 @@ from preprocess_datasets import get_dataset,DATASETS
 import argparse
 import yaml
 import h5py
+import multiprocessing
+import threading
 import numpy as np
 import pandas as pd
 import time
 import json
+import docker
+import logging
+import traceback
 
+def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
+    build_args, query_args, bw, mu, timeout=3600):
+    cmd = ['--dataset', dataset,
+           '--algorithm', algo,
+           '--wrapper', wrapper,
+           '--constructor', constructor,
+           '--mu', str(mu),
+           '--bw', str(bw),
+           '--reps', str(reps),
+           '--query-set', query_set,
+           '--build-args', '' + build_args + '',
+           '--query-args', '' + query_args + '']
 
-def get_result_fn(dataset, mu, query_set, algo):
-    print(dataset, mu, query_set, algo.name(), algo)
-    dir_name = os.path.join("results", dataset, query_set, algo.name(), str(mu))
+    print(" ".join(cmd)) 
+    #os.system("python cmd_runner.py " + " ".join(cmd))
+    client = docker.from_env()
+
+    print("Creating ", docker_tag)
+
+    container = client.containers.run(
+                docker_tag,
+                cmd,
+                volumes={
+                    os.path.abspath('.'):
+                        {'bind': '/home/app/', 'mode': 'rw'},
+                },
+                mem_limit=str(mem_limit),
+                detach=True)
+
+    print('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
+                (container.short_id, cpu_limit, mem_limit, timeout, cmd))
+    logger = logging.getLogger(f"deann.{container.short_id}")
+
+    logger.info('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
+                (container.short_id, cpu_limit, mem_limit, timeout, cmd))
+
+    def stream_logs():
+        for line in container.logs(stream=True):
+            logger.info(line.decode().rstrip())
+
+    t = threading.Thread(target=stream_logs, daemon=True)
+    t.start()
+
+    try:
+        exit_code = container.wait(timeout=timeout)
+        exit_code = exit_code["StatusCode"]
+
+        # Exit if exit code
+        if exit_code not in [0, None]:
+            logger.error(container.logs().decode())
+            logger.error('Child process for container %s raised exception %d' % (container.short_id, str(exit_code)))
+    except:
+        logger.error('Container.wait for container %s failed with exception' % container.short_id)
+        logger.error('Invoked with %s' % cmd)
+        traceback.print_exc()
+    finally:
+        container.remove(force=True)
+
+def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
+    build_args, query_args, bw, mu, timeout=3600):
+    cmd = ['--dataset', dataset,
+           '--algorithm', algo,
+           '--wrapper', wrapper,
+           '--constructor', constructor,
+           '--mu', str(mu),
+           '--bw', str(bw),
+           '--reps', str(reps),
+           '--query-set', query_set,
+           '--build-args', '' + build_args + '',
+           '--query-args', '' + query_args + '']
+
+    print(" ".join(cmd)) 
+    run_from_cmdline(cmd)
+    #os.system("python cmd_runner.py " + " ".join(cmd))
+
+def run_worker(args, queue, i):
+    while not queue.empty():
+        algo, bw, algo_def, build_args, query_args = queue.get()
+        mem_limit = 8e9 # 8gb
+        cpu_limit = i
+        run_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
+            args.reps, args.query_set, build_args, query_args, 
+            bw, args.kde_value, args.timeout)
+
+def get_result_fn(dataset, mu, query_set, algo, args_str, query_str):
+    dir_name = os.path.join("results", dataset, query_set, algo, str(mu))
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    return os.path.join(dir_name, f"{algo}.hdf5")
+    return os.path.join(dir_name, f'{args_str}_{query_str}.hdf5')
 
 def write_result(res, ds, mu, algo, query_set, m):
     # ids, ests, samples, times = algo.process_result()
@@ -78,6 +167,16 @@ def main():
         choices=['validation','test'],
         default='test'
     )
+    parser.add_argument(
+        '--nodocker',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--timeout',
+        help='timeout in seconds',
+        default=3600,
+        type=int,
+    )
     args = parser.parse_args()
 
     with open(args.definition, 'r') as f:
@@ -107,57 +206,37 @@ def main():
     else:
         algorithms = list(definitions.keys())
 
-    X = np.array(dataset['train'], dtype=np.float32)
-    Y = np.array(dataset[args.query_set], dtype=np.float32)
 
     tau = np.percentile(np.array(dataset[f'kde.{args.query_set}' + f'{mu:f}'.strip('0')], dtype=np.float32),
                             1)
 
     exps = {}
 
+    # generate all experiments and remove the once that are already there
     for algo in algorithms:
-        mod = __import__(f'algorithms.{definitions[algo]["wrapper"]}', fromlist=[definitions[algo]['constructor']])
-        Est_class = getattr(mod, definitions[algo]['constructor'])
-        est = Est_class(dataset_name, args.query_set, mu, bw, definitions[algo].get('args', {}))
+        _args = definitions[algo].get('args', {})
+        args_str = json.dumps(_args)
+        exps[algo] = {
+            "build": args_str,
+            "query": [],
+        }
         for query_params in definitions[algo].get('query', [None]):
             if type(query_params) == list and type(query_params[0]) == list:
                 qps = product(*query_params)
             else:
                 qps = [query_params]
             for qp in qps: 
-                est.set_query_param(qp)
-                if args.force or not os.path.exists(get_result_fn(dataset_name, mu, args.query_set, est)):
-                    exps.setdefault(algo, []).append(qp)
-
-
-
+                query_str = json.dumps(qp)
+                if args.force or not os.path.exists(get_result_fn(dataset_name, mu, args.query_set, algo, args_str, query_str)):
+                    exps[algo]["query"].append(qp)
     print(exps)
 
-# generate all experiments and remove the once that are already there
-    for algo, query_params in exps.items():
-        mod = __import__(f'algorithms.{definitions[algo]["wrapper"]}', fromlist=[definitions[algo]['constructor']])
-        Est_class = getattr(mod, definitions[algo]['constructor'])
-        est = Est_class(dataset_name, args.query_set, mu, bw, definitions[algo].get('args', {}))
-        print(f'Running {algo}')
-        t0 = time.time()
-        # est.fit(numpy.array(X, dtype=numpy.float32))
-        est.fit(X)
-        print(f'Preprocessing took {(time.time() - t0)/1e6} ms.')
-        for query_params in query_params:
-            print(f'Running {algo} with {query_params}')
-            results = list()
-            est.set_query_param(query_params)
-            # est.query(numpy.array(Y, dtype=numpy.float32))
-            for rep in range(args.reps):
-                results.append(est.query(Y))
-            try:
-                processed_results = est.process_results(results)
-            # write_result(dataset_name, mu, est, args.query_set, Y.shape[0])
-                write_result(processed_results, dataset_name, mu, est, args.query_set, Y.shape[0])
-            except:
-                print(f"Error processing {algo} with {query_params}")
-
-
+    queue = multiprocessing.Queue()
+    for algo, params_dict in exps.items():
+            queue.put((algo, bw, definitions[algo], params_dict["build"], json.dumps(params_dict["query"])))
+    workers = [multiprocessing.Process(target=run_worker, args=(args, queue, i)) for i in range(1)]
+    [worker.start() for worker in workers]
+    [worker.join() for worker in workers]
 
 if __name__ == "__main__":
     main()

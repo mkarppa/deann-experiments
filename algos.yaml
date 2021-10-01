@@ -1,6 +1,7 @@
 ann-faiss:
   constructor: ANNFaiss
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
   query:
   - [[10, 50], [0, 50, 100], [512], [1, 5, 10, 50]]
 hbe:
@@ -8,6 +9,7 @@ hbe:
     binary: hbe
   constructor: HBEEstimator
   wrapper: hbe 
+  docker: deann-experiments-hbe
   query:
   - [[0.75, 1.0, 2.0, 3.0], [0.0001]]
 naive:
@@ -17,6 +19,7 @@ naive:
 sklearn-balltree:
   constructor: SklearnBallTreeEstimator
   wrapper: sklearn
+  docker: deann-experiments-sklearn
   query:
   - - 10
     - 0.0

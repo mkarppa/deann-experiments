@@ -37,14 +37,16 @@ Requirements:
 
 - Python3
 - Docker
+- pydocker
 
 The framework is to supposed to be run through Docker. After cloning the repository, build the container as follows: 
 
 ``` 
-$ docker build . -t deann-experiments
+$ pip install pydocker
+$ python install.py  
 ```
 
-The container will setup all required libraries necessary to run the experiments. 
+The containers will setup all required libraries necessary to run the experiments. 
 
 After building the container, mount the repository and connect to the container as follows:
 
