@@ -17,8 +17,6 @@ jobs:
         
     - name: Run experiments on shuttle
       run: | 
-          python run_exp.py --algorithm hbe
-          python run_exp.py --algorithm deann
-          python run_exp.py --algorithm sklearn
+          python3 run_exp.py --algorithm deann
 
 
