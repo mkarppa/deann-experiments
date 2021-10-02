@@ -11,11 +11,11 @@ jobs:
 
     - name: Install 
       run: |
-          pip install pydocker
+          pip3 install -r requirements.txt
           python3 install.py
         
         
-    - name: Run experiments on shuffle
+    - name: Run experiments on shuttle
       run: | 
           python run_exp.py --algorithm hbe
           python run_exp.py --algorithm deann
