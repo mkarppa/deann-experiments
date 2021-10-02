@@ -16,7 +16,6 @@ import pandas as pd
 import time
 import json
 import docker
-import logging
 import traceback
 
 def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
@@ -45,34 +44,31 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
                     os.path.abspath('.'):
                         {'bind': '/home/app/', 'mode': 'rw'},
                 },
-                mem_limit=str(mem_limit),
+                mem_limit=mem_limit,
                 detach=True)
 
     print('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
                 (container.short_id, cpu_limit, mem_limit, timeout, cmd))
-    logger = logging.getLogger(f"deann.{container.short_id}")
-
-    logger.info('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
-                (container.short_id, cpu_limit, mem_limit, timeout, cmd))
 
     def stream_logs():
         for line in container.logs(stream=True):
-            logger.info(line.decode().rstrip())
+            print(line.decode().rstrip())
 
     t = threading.Thread(target=stream_logs, daemon=True)
     t.start()
 
     try:
         exit_code = container.wait(timeout=timeout)
-        exit_code = exit_code["StatusCode"]
+        if type(exit_code) == dict:
+            exit_code = exit_code["StatusCode"]
 
         # Exit if exit code
         if exit_code not in [0, None]:
-            logger.error(container.logs().decode())
-            logger.error('Child process for container %s raised exception %d' % (container.short_id, str(exit_code)))
+            print(container.logs().decode())
+            print('Child process for container %s raised exception %d' % (container.short_id, str(exit_code)))
     except:
-        logger.error('Container.wait for container %s failed with exception' % container.short_id)
-        logger.error('Invoked with %s' % cmd)
+        print('Container.wait for container %s failed with exception' % container.short_id)
+        print('Invoked with %s' % cmd)
         traceback.print_exc()
     finally:
         container.remove(force=True)
@@ -97,7 +93,7 @@ def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, cons
 def run_worker(args, queue, i):
     while not queue.empty():
         algo, bw, algo_def, build_args, query_args = queue.get()
-        mem_limit = 8e9 # 8gb
+        mem_limit = int(8e9) # 8gb
         cpu_limit = i
         run_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
             args.reps, args.query_set, build_args, query_args, 
