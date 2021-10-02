@@ -17,6 +17,6 @@ jobs:
         
     - name: Run experiments on shuttle
       run: | 
-          python3 run_exp.py --algorithm deann
+          python3 run_exp.py --algorithm ann-faiss
 
 
