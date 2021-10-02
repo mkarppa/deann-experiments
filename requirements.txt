@@ -1,5 +1,5 @@
 h5py
 pyyaml
 pandas
-pydocker
+docker
 scikit-learn
