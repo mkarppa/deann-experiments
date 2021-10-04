@@ -8,6 +8,7 @@ import re
 from tempfile import NamedTemporaryFile
 from preprocess_datasets import get_dataset_fn
 import from_hdf5
+from math import sqrt
 
 class RSEstimator(BaseEstimator):
     def __init__(self, dataset, query_set, kernel, mu, h, args):
@@ -67,7 +68,7 @@ class RSEstimator(BaseEstimator):
         config += f'    d = "{self.d}";\n'
         config += f'    n = "{self.n}";\n'
         config += f'    m = "{self.m}";\n'
-        config += f'    h = "{self.h}";\n'
+        config += f'    h = "{self.h*sqrt(2) if self.kernel == "gaussian" else self.h}";\n'
         config += f'    bw_const = "true";\n'
         config += f'    ignore_header = "false";\n'
         config += f'    start_col = "0";\n'
