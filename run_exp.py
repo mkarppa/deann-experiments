@@ -25,70 +25,77 @@ def blacklist_algo(algo, build_args, query_args, args, err):
     # blacklist the first query argument which doesn't exist as a file
     # the assumption is that this is the one that produced an error and should not be re-run
     query_args = json.loads(query_args)
-    for qa in query_args:
-        qa = json.dumps(qa)
+    while True:
+        qa = json.dumps(query_args.pop(0))
         if result_exists(args.dataset, args.kde_value, args.query_set, algo, build_args, qa):
             continue
         write_result(None, args.dataset, args.kde_value, args.query_set, 
             algo, build_args, qa,err=err)
         break
+    # return the set of query parameters not inspected so far to continue running 
+    # experiments
+    return json.dumps(query_args)
 
 def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
     build_args, query_args, bw, mu, timeout=3600, blacklist=False, args=None):
-    cmd = ['--dataset', dataset,
-           '--algorithm', algo,
-           '--wrapper', wrapper,
-           '--constructor', constructor,
-           '--mu', str(mu),
-           '--bw', str(bw),
-           '--reps', str(reps),
-           '--query-set', query_set,
-           '--build-args', '' + build_args + '',
-           '--query-args', '' + query_args + '']
 
-    client = docker.from_env()
+    while len(json.loads(query_args)) > 0:
+        cmd = ['--dataset', dataset,
+            '--algorithm', algo,
+            '--wrapper', wrapper,
+            '--constructor', constructor,
+            '--mu', str(mu),
+            '--bw', str(bw),
+            '--reps', str(reps),
+            '--query-set', query_set,
+            '--build-args', '' + build_args + '',
+            '--query-args', '' + query_args + '']
 
+        client = docker.from_env()
 
-    container = client.containers.run(
-                docker_tag,
-                cmd,
-                volumes={
-                    os.path.abspath('.'):
-                        {'bind': '/home/app/', 'mode': 'rw'},
-                },
-                mem_limit=mem_limit,
-                cpuset_cpus=str(cpu_limit),
-                detach=True)
+        container = client.containers.run(
+                    docker_tag,
+                    cmd,
+                    volumes={
+                        os.path.abspath('.'):
+                            {'bind': '/home/app/', 'mode': 'rw'},
+                    },
+                    mem_limit=mem_limit,
+                    cpuset_cpus=str(cpu_limit),
+                    detach=True)
 
-    print('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
-                (container.short_id, cpu_limit, mem_limit, timeout, cmd))
+        print('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
+                    (container.short_id, cpu_limit, mem_limit, timeout, cmd))
 
-    def stream_logs():
-        for line in container.logs(stream=True):
-            print(line.decode().rstrip())
+        def stream_logs():
+            for line in container.logs(stream=True):
+                print(line.decode().rstrip())
 
-    t = threading.Thread(target=stream_logs, daemon=True)
-    t.start()
+        t = threading.Thread(target=stream_logs, daemon=True)
+        t.start()
 
-    try:
-        exit_code = container.wait(timeout=timeout)
-        if type(exit_code) == dict:
-            exit_code = exit_code["StatusCode"]
+        try:
+            exit_code = container.wait(timeout=timeout)
+            if type(exit_code) == dict:
+                exit_code = exit_code["StatusCode"]
 
-        # Exit if exit code
-        if exit_code not in [0, None]:
-            print(container.logs().decode())
-            print('Child process for container %s raised exception %d' % (container.short_id, exit_code))
+            # Exit if exit code
+            if exit_code not in [0, None]:
+                print(container.logs().decode())
+                print('Child process for container %s raised exception %d' % (container.short_id, exit_code))
+                if blacklist:
+                    query_args = blacklist_algo(algo, build_args, query_args, args, err=container.logs.decode())
+                    continue
+        except:
+            print('Container.wait for container %s failed with exception' % container.short_id)
+            print('Invoked with %s' % cmd)
+            traceback.print_exc()
             if blacklist:
-                blacklist_algo(algo, build_args, query_args, args, err=container.logs.decode())
-    except:
-        print('Container.wait for container %s failed with exception' % container.short_id)
-        print('Invoked with %s' % cmd)
-        traceback.print_exc()
-        if blacklist:
-            blacklist_algo(algo, build_args, query_args, args, err=cmd)
-    finally:
-        container.remove(force=True)
+                query_args = blacklist_algo(algo, build_args, query_args, args, err=cmd)
+                continue
+        finally:
+            container.remove(force=True)
+        break
 
 def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
     build_args, query_args, bw, mu):
@@ -105,7 +112,6 @@ def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, cons
 
     print(" ".join(cmd)) 
     run_from_cmdline(cmd)
-    #os.system("python cmd_runner.py " + " ".join(cmd))
 
 def run_worker(args, queue, i):
     while not queue.empty():
