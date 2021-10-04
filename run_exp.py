@@ -63,6 +63,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
                         {'bind': '/home/app/', 'mode': 'rw'},
                 },
                 mem_limit=mem_limit,
+                cpuset_cpus=str(cpu_limit),
                 detach=True)
 
     print('Created container %s: CPU limit %s, mem limit %s, timeout %d, command %s' % \
@@ -209,6 +210,11 @@ def main():
         '--blacklist',
         action="store_true"
     )
+    parser.add_argument(
+        '--cpu',
+        type=int,
+        default=0
+    )
     args = parser.parse_args()
 
     with open(args.definition, 'r') as f:
@@ -272,7 +278,7 @@ def main():
     queue = multiprocessing.Queue()
     for algo, params_dict in exps.items():
             queue.put((algo, bw, definitions[algo], params_dict["build"], json.dumps(params_dict["query"])))
-    workers = [multiprocessing.Process(target=run_worker, args=(args, queue, i)) for i in range(1)]
+    workers = [multiprocessing.Process(target=run_worker, args=(args, queue, i)) for i in range(args.cpu, args.cpu + 1)]
     [worker.start() for worker in workers]
     [worker.join() for worker in workers]
 
