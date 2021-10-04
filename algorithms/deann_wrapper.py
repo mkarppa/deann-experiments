@@ -136,6 +136,7 @@ class FaissIVF(Faiss):
 
 class Naive(BaseEstimator):
     def __init__(self, dataset, query_set, kernel, mu, h, args):
+        print(f'constructing Naive with kernel={kernel}')
         self.est = kde.NaiveKde(h, kernel)
 
     def fit(self, X):
@@ -200,8 +201,8 @@ class Naive(BaseEstimator):
 
 
 class RandomSampling(Naive):
-    def __init__(self, dataset, query_set, mu, h, args):
-        self.est = kde.RandomSampling(h, 'exponential', 1)
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
+        self.est = kde.RandomSampling(h, kernel, 1)
         self.rs = 1
 
     def set_query_param(self, param):
@@ -216,8 +217,8 @@ class RandomSampling(Naive):
 
 
 class RandomSamplingPermuted(Naive):
-    def __init__(self, dataset, query_set, mu, h, args):
-        self.est = kde.RandomSamplingPermuted(h, 'exponential', 1)
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
+        self.est = kde.RandomSamplingPermuted(h, kernel, 1)
         self.rs = 1
 
     def set_query_param(self, param):
@@ -232,8 +233,8 @@ class RandomSamplingPermuted(Naive):
 
 
 class ANN(Naive):
-    def __init__(self, dataset, query_set, h, args, ann_object):
-        self.est = kde.AnnEstimator(h, "exponential", 0, 0, ann_object)
+    def __init__(self, dataset, query_set, kernel, h, args, ann_object):
+        self.est = kde.AnnEstimator(h, kernel, 0, 0, ann_object)
         self.ann_object = ann_object
 
     def set_query_param(self, param):
@@ -271,8 +272,8 @@ class ANNBrute(ANN):
 
 
 class ANNFaiss(ANN):
-    def __init__(self, dataset, query_set, mu, h, args):
-        super().__init__(dataset, query_set, h, args, FaissIVF('euclidean', None))
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
+        super().__init__(dataset, query_set, kernel, h, args, FaissIVF('euclidean', None))
         self.X = None
 
     def set_query_param(self, param):
@@ -302,8 +303,8 @@ class ANNFaiss(ANN):
 
 
 class ANNPermuted(Naive):
-    def __init__(self, dataset, query_set, h, args, ann_object):
-        self.est = kde.AnnEstimatorPermuted(h, "exponential", 0, 0, ann_object)
+    def __init__(self, dataset, query_set, kernel, h, args, ann_object):
+        self.est = kde.AnnEstimatorPermuted(h, kernel, 0, 0, ann_object)
         self.ann_object = ann_object
 
     def set_query_param(self, param):
@@ -317,8 +318,8 @@ class ANNPermuted(Naive):
 
 
 class ANNPermutedFaiss(ANNPermuted):
-    def __init__(self, dataset, query_set, mu, h, args):
-        super().__init__(dataset, query_set, h, args, FaissIVF('euclidean', None))
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
+        super().__init__(dataset, query_set, kernel, h, args, FaissIVF('euclidean', None))
         self.X = None
 
     def set_query_param(self, param):
