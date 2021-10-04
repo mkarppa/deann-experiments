@@ -10,14 +10,15 @@ from preprocess_datasets import get_dataset_fn
 import from_hdf5
 
 class RSEstimator(BaseEstimator):
-    def __init__(self, dataset, query_set, mu, h, args):
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
         self.eps = None
         self.binary =  args['binary']
         self.dataset = dataset
         self.query_set = query_set
         self.mu = '{:f}'.format(mu).strip('0')
         self.h = h
-        from_hdf5.create_dataset(get_dataset_fn(dataset))
+        self.kernel = kernel
+        from_hdf5.create_dataset(get_dataset_fn(dataset), kernel)
 
     def fit(self, X):
         # pass # do nothing
@@ -25,7 +26,7 @@ class RSEstimator(BaseEstimator):
         self.d = X.shape[1]
 
     def query(self, Y):
-        logfilename = f'{self.name()} {self.dataset} {self.mu} eps={self.eps} tau={self.tau} {datetime.now()}.log'
+        logfilename = f'{self.name()} {self.dataset} {self.mu} kernel={self.kernel} eps={self.eps} tau={self.tau} {datetime.now()}.log'
         self.m = Y.shape[0]
         with NamedTemporaryFile('w', delete = True) as f:
             self.write_conf(f)
@@ -54,14 +55,15 @@ class RSEstimator(BaseEstimator):
 
     def write_conf(self, f):
         data_dir = os.path.join(os.environ['HBE'], 'resources', 'data')
-        config  =  'exp {\n'
+        config  = ('exp' if self.kernel == 'exponential' else self.kernel) + ' {\n'
         config += f'    name = "{self.dataset}";\n'
         config += f'    fpath = "{data_dir}/{self.dataset}.train.csv";\n'
         config += f'    qpath = "{data_dir}/{self.dataset}.{self.query_set}'
         config += '.csv";\n'
         config += f'    exact_path = "{data_dir}/{self.dataset}.kde.'
         config += f'{self.query_set}{self.mu}.csv";\n'
-        config += f'    kernel = "exponential";\n'
+        # config += f'    kernel = "exponential";\n'
+        config += f'    kernel = "{self.kernel}";\n'
         config += f'    d = "{self.d}";\n'
         config += f'    n = "{self.n}";\n'
         config += f'    m = "{self.m}";\n'
@@ -106,7 +108,8 @@ class RSEstimator(BaseEstimator):
         return 'rs'
 
     def cmd(self, conf_filename):
-        return f'{self.binary} {conf_filename} exp {self.eps} true'
+        scope = 'exp' if self.kernel == 'exponential' else self.kernel
+        return f'{self.binary} {conf_filename} {scope} {self.eps} true'
 
     def __str__(self):
         return f'(eps={self.eps}, tau={self.tau})'
@@ -118,6 +121,7 @@ class HBEEstimator(RSEstimator):
         return 'hbe'
 
     def cmd(self, conf_filename):
-        return f'{self.binary} {conf_filename} exp {self.eps}'
+        scope = 'exp' if self.kernel == 'exponential' else self.kernel
+        return f'{self.binary} {conf_filename} {scope} {self.eps}'
 
 
