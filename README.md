@@ -37,12 +37,11 @@ Requirements:
 
 - Python3
 - Docker
-- pydocker
 
 The framework is to supposed to be run through Docker. After cloning the repository, build the container as follows: 
 
 ``` 
-$ pip install pydocker
+$ pip install -r requirements.txt
 $ python install.py  
 ```
 
@@ -50,9 +49,6 @@ The containers will setup all required libraries necessary to run the experiment
 
 After building the container, mount the repository and connect to the container as follows:
 
-```
-$ docker run -v "$(pwd)":/app/:rw -it deann-experiments
-```
 
 ### Running experiments
 
@@ -76,7 +72,9 @@ produces a csv file containing results of all runs. The `--help` argument shows 
 
 ### Running locally
 
-In case that you have a setup that supports running `deann` and `hbe` locally, you do not need to go through the docker environment. Take a look at `Dockerfile` to see which libraries are necessary. In particular, note that `hbe` needs to have an environmental variable set to point at its installation path.
+In case that you have a setup that supports running `deann` and `hbe` locally, you do not need to go through the docker environment. 
+Just run all experiments with the flag `--no-docker`. 
+Take a look how the libraries are set up in `./install.`.
 
 ## Evaluation
 
