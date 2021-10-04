@@ -5,10 +5,10 @@ import time
 import pandas as pd
 
 class SklearnKDTreeEstimator(BaseEstimator):
-    def __init__(self, dataset, query_set, mu, h, args):
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
         self.h = h
         self.est = KernelDensity(algorithm = 'kd_tree', bandwidth = h,
-                                     kernel = 'exponential')
+                                     kernel = kernel)
 
     def set_query_param(self, query_param):
         self.leaf_size, self.atol, self.rtol = query_param
@@ -66,10 +66,10 @@ class SklearnKDTreeEstimator(BaseEstimator):
 
 
 class SklearnBallTreeEstimator(SklearnKDTreeEstimator):
-    def __init__(self, dataset, query_set, mu, h, args):
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
         self.h = h
         self.est = KernelDensity(algorithm = 'ball_tree', bandwidth = h,
-                                     kernel = 'exponential')
+                                     kernel = kernel)
 
     def name(self):
         return 'sklearn-balltree'
