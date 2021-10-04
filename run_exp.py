@@ -83,7 +83,9 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
         # Exit if exit code
         if exit_code not in [0, None]:
             print(container.logs().decode())
-            print('Child process for container %s raised exception %d' % (container.short_id, str(exit_code)))
+            print('Child process for container %s raised exception %d' % (container.short_id, exit_code))
+            if blacklist:
+                blacklist_algo(algo, build_args, query_args)
     except:
         print('Container.wait for container %s failed with exception' % container.short_id)
         print('Invoked with %s' % cmd)
