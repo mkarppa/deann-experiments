@@ -17,6 +17,8 @@ jobs:
         
     - name: Run experiments on shuttle
       run: | 
-          python3 run_exp.py --algorithm ann-faiss
+          python3 run_exp.py --algorithm ann-faiss --cpu 0
+          python3 data_export.py -o res.csv
+          python3 additional/tabulate_results.py -i res.csv show-best
 
 
