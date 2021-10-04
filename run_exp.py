@@ -1,6 +1,7 @@
 import os
 
 from cmd_runner import run_from_cmdline
+from install import build
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from itertools import product
@@ -18,8 +19,28 @@ import json
 import docker
 import traceback
 
+def blacklist_algo(algo, build_args, query_args):
+    f = open('blacklist.yaml', 'w')
+    yaml.dump({algo : {"build" : build_args, "query": query_args}}, f)
+    f.close()
+
+def is_blacklisted(algo, build_args, query_args):
+    if not os.path.exists("blacklist.yaml"):
+        return False
+    f = open('blacklist.yaml', 'rb')
+    d = yaml.load(f.read())
+    f.close()
+    if algo not in d:
+        return False
+    if d[algo]["build"] != build_args:
+        return False
+    if d[algo]["query"] != query_args:
+        return False
+
+    return True
+
 def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
-    build_args, query_args, bw, mu, timeout=3600):
+    build_args, query_args, bw, mu, timeout=3600, blacklist=False):
     cmd = ['--dataset', dataset,
            '--algorithm', algo,
            '--wrapper', wrapper,
@@ -31,11 +52,8 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
            '--build-args', '' + build_args + '',
            '--query-args', '' + query_args + '']
 
-    print(" ".join(cmd)) 
-    #os.system("python cmd_runner.py " + " ".join(cmd))
     client = docker.from_env()
 
-    print("Creating ", docker_tag)
 
     container = client.containers.run(
                 docker_tag,
@@ -70,11 +88,13 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
         print('Container.wait for container %s failed with exception' % container.short_id)
         print('Invoked with %s' % cmd)
         traceback.print_exc()
+        if blacklist:
+            blacklist_algo(algo, build_args, query_args)
     finally:
         container.remove(force=True)
 
 def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
-    build_args, query_args, bw, mu, timeout=3600):
+    build_args, query_args, bw, mu):
     cmd = ['--dataset', dataset,
            '--algorithm', algo,
            '--wrapper', wrapper,
@@ -95,9 +115,19 @@ def run_worker(args, queue, i):
         algo, bw, algo_def, build_args, query_args = queue.get()
         mem_limit = int(8e9) # 8gb
         cpu_limit = i
-        run_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
-            args.reps, args.query_set, build_args, query_args, 
-            bw, args.kde_value, args.timeout)
+        if args.blacklist and not args.force and \
+            is_blacklisted(algo, build_args, query_args):
+            print(f"BLACKLISTED: Not running {algo} with build={build_args} and query={query_args}")
+            continue
+
+        if not args.no_docker:
+            run_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
+                args.reps, args.query_set, build_args, query_args, 
+                bw, args.kde_value, args.timeout, args.blacklist)
+        else:
+            run_no_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
+                args.reps, args.query_set, build_args, query_args, 
+                bw, args.kde_value)
 
 def get_result_fn(dataset, mu, query_set, algo, args_str, query_str):
     dir_name = os.path.join("results", dataset, query_set, algo, str(mu))
@@ -164,7 +194,7 @@ def main():
         default='test'
     )
     parser.add_argument(
-        '--nodocker',
+        '--no-docker',
         action='store_true'
     )
     parser.add_argument(
@@ -172,6 +202,10 @@ def main():
         help='timeout in seconds',
         default=3600,
         type=int,
+    )
+    parser.add_argument(
+        '--blacklist',
+        action="store_true"
     )
     args = parser.parse_args()
 
@@ -225,7 +259,13 @@ def main():
                 query_str = json.dumps(qp)
                 if args.force or not os.path.exists(get_result_fn(dataset_name, mu, args.query_set, algo, args_str, query_str)):
                     exps[algo]["query"].append(qp)
+        if len(exps[algo]["query"]) == 0:
+            del exps[algo]
     print(exps)
+
+    if len(exps) == 0:
+        print("No experiments to run.")
+        exit(-1)
 
     queue = multiprocessing.Queue()
     for algo, params_dict in exps.items():
