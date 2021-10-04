@@ -78,7 +78,7 @@ def run_from_cmdline(args=None):
     t0 = time.time()
     # est.fit(numpy.array(X, dtype=numpy.float32))
     est.fit(X)
-    print(f'Preprocessing took {(time.time() - t0)/1e6} ms.')
+    print(f'Preprocessing took {(time.time() - t0) * 1e3} ms.')
     for query_params in query_args:
         print(f'Running {algo} with {query_params}')
         results = list()
@@ -88,9 +88,8 @@ def run_from_cmdline(args=None):
             results.append(est.query(Y))
         try:
             processed_results = est.process_results(results)
-        # write_result(dataset_name, mu, est, args.query_set, Y.shape[0])
             write_result(processed_results, args.dataset, 
-                args.mu, args.query_set, algo, args.build_args, json.dumps(query_params), Y.shape[0])
+                args.mu, args.query_set, algo, args.build_args, json.dumps(query_params))
         except:
             print(f"Error processing {algo} with {query_params}")
 

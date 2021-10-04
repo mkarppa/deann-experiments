@@ -38,8 +38,8 @@ class RSEstimator(BaseEstimator):
             print(self.cmd(f.name).split())
             res = subprocess.run(self.cmd(f.name).split(),
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE).stdout\
-                                    .decode('utf-8').strip()
+                                    stderr=subprocess.PIPE)
+            res = res.stdout.decode('utf-8').strip()
             end = time.time()
             print(f'{end-start}')
             print(f'writing log to {logfilename}')

@@ -6,6 +6,7 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 from itertools import product
 from preprocess_datasets import get_dataset,DATASETS
+from result import get_result_fn, result_exists, write_result
 
 import argparse
 import yaml
@@ -18,29 +19,22 @@ import time
 import json
 import docker
 import traceback
+import psutil
 
-def blacklist_algo(algo, build_args, query_args):
-    f = open('blacklist.yaml', 'w')
-    yaml.dump({algo : {"build" : build_args, "query": query_args}}, f)
-    f.close()
-
-def is_blacklisted(algo, build_args, query_args):
-    if not os.path.exists("blacklist.yaml"):
-        return False
-    f = open('blacklist.yaml', 'rb')
-    d = yaml.load(f.read())
-    f.close()
-    if algo not in d:
-        return False
-    if d[algo]["build"] != build_args:
-        return False
-    if d[algo]["query"] != query_args:
-        return False
-
-    return True
+def blacklist_algo(algo, build_args, query_args, args, err):
+    # blacklist the first query argument which doesn't exist as a file
+    # the assumption is that this is the one that produced an error and should not be re-run
+    query_args = json.loads(query_args)
+    for qa in query_args:
+        qa = json.dumps(qa)
+        if result_exists(args.dataset, args.kde_value, args.query_set, algo, build_args, qa):
+            continue
+        write_result(None, args.dataset, args.kde_value, args.query_set, 
+            algo, build_args, qa,err=err)
+        break
 
 def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
-    build_args, query_args, bw, mu, timeout=3600, blacklist=False):
+    build_args, query_args, bw, mu, timeout=3600, blacklist=False, args=None):
     cmd = ['--dataset', dataset,
            '--algorithm', algo,
            '--wrapper', wrapper,
@@ -86,13 +80,13 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
             print(container.logs().decode())
             print('Child process for container %s raised exception %d' % (container.short_id, exit_code))
             if blacklist:
-                blacklist_algo(algo, build_args, query_args)
+                blacklist_algo(algo, build_args, query_args, args, err=container.logs.decode())
     except:
         print('Container.wait for container %s failed with exception' % container.short_id)
         print('Invoked with %s' % cmd)
         traceback.print_exc()
         if blacklist:
-            blacklist_algo(algo, build_args, query_args)
+            blacklist_algo(algo, build_args, query_args, args, err=cmd)
     finally:
         container.remove(force=True)
 
@@ -116,47 +110,19 @@ def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, cons
 def run_worker(args, queue, i):
     while not queue.empty():
         algo, bw, algo_def, build_args, query_args = queue.get()
-        mem_limit = int(8e9) # 8gb
+        avail_mem = psutil.virtual_memory().available
+        mem_limit = min(avail_mem, int(32e9)) # use max 32gb
+        
         cpu_limit = i
-        if args.blacklist and not args.force and \
-            is_blacklisted(algo, build_args, query_args):
-            print(f"BLACKLISTED: Not running {algo} with build={build_args} and query={query_args}")
-            continue
 
         if not args.no_docker:
             run_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
                 args.reps, args.query_set, build_args, query_args, 
-                bw, args.kde_value, args.timeout, args.blacklist)
+                bw, args.kde_value, args.timeout, args.blacklist, args)
         else:
             run_no_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
                 args.reps, args.query_set, build_args, query_args, 
                 bw, args.kde_value)
-
-def get_result_fn(dataset, mu, query_set, algo, args_str, query_str):
-    dir_name = os.path.join("results", dataset, query_set, algo, str(mu))
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    return os.path.join(dir_name, f'{args_str}_{query_str}.hdf5')
-
-def write_result(res, ds, mu, algo, query_set, m):
-    # ids, ests, samples, times = algo.process_result()
-    # if len(ids) != m:
-    #     print(f"Couldn't fetch results for {algo.name()} running with {str(algo)}.")
-    #     return
-
-    fn = get_result_fn(ds, mu, query_set, algo)
-    pivot = pd.pivot(res, columns='iter', index='id')
-    with h5py.File(fn, 'w') as f:
-        f.attrs['dataset'] = ds
-        f.attrs['algorithm'] = algo.name()
-        f.attrs['params'] = str(algo)
-        f.attrs['mu'] = mu
-        f.attrs['query_set'] = query_set
-        # f.create_dataset('ids', data=pivot['id'])
-        f.create_dataset('estimates', data=pivot['est'])
-        f.create_dataset('samples', data=pivot['samples'])
-        f.create_dataset('times', data=pivot['time'])
-
 
 def main():
     parser = argparse.ArgumentParser()
