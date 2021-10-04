@@ -78,12 +78,19 @@ def main():
         choices=['validation','test'],
         default='test'
     )
+    parser.add_argument(
+        '--kernel',
+        choices=['exponential','gaussian'],
+        default='gaussian'
+    )
     args = parser.parse_args()
 
     with open(args.definition, 'r') as f:
         definitions = yaml.load(f, Loader=yaml.Loader)
 
     print(definitions)
+
+    kernel = args.kernel
 
     if args.list_algorithms:
         print("Available algorithms:")
@@ -92,11 +99,11 @@ def main():
 
     print(f"Running on {args.dataset}")
     dataset_name = args.dataset
-    dataset = get_dataset(dataset_name)
+    dataset = get_dataset(dataset_name, kernel)
     print(dataset)
 
     mu = args.kde_value
-    kde_str = 'kde.' + args.query_set + '{:f}'.format(mu).strip('0')
+    kde_str = 'kde.' + args.query_set + f'.{kernel}' + '{:f}'.format(mu).strip('0')
     _, bw = dataset.attrs[kde_str]
 
     print(f"Running with bandwidth {bw} to achieve kde value {mu}.")
@@ -110,15 +117,15 @@ def main():
     X = np.array(dataset['train'], dtype=np.float32)
     Y = np.array(dataset[args.query_set], dtype=np.float32)
 
-    tau = np.percentile(np.array(dataset[f'kde.{args.query_set}' + f'{mu:f}'.strip('0')], dtype=np.float32),
-                            1)
+    #tau = np.percentile(np.array(dataset[f'kde.{args.query_set}' + f'{mu:f}'.strip('0')], dtype=np.float32),
+     #                       1)
 
     exps = {}
 
     for algo in algorithms:
         mod = __import__(f'algorithms.{definitions[algo]["wrapper"]}', fromlist=[definitions[algo]['constructor']])
         Est_class = getattr(mod, definitions[algo]['constructor'])
-        est = Est_class(dataset_name, args.query_set, mu, bw, definitions[algo].get('args', {}))
+        est = Est_class(dataset_name, args.query_set, kernel, mu, bw, definitions[algo].get('args', {}))
         for query_params in definitions[algo].get('query', [None]):
             if type(query_params) == list and type(query_params[0]) == list:
                 qps = product(*query_params)
@@ -137,7 +144,7 @@ def main():
     for algo, query_params in exps.items():
         mod = __import__(f'algorithms.{definitions[algo]["wrapper"]}', fromlist=[definitions[algo]['constructor']])
         Est_class = getattr(mod, definitions[algo]['constructor'])
-        est = Est_class(dataset_name, args.query_set, mu, bw, definitions[algo].get('args', {}))
+        est = Est_class(dataset_name, args.query_set, kernel, mu, bw, definitions[algo].get('args', {}))
         print(f'Running {algo}')
         t0 = time.time()
         # est.fit(numpy.array(X, dtype=numpy.float32))

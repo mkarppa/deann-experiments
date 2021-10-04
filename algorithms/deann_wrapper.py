@@ -135,8 +135,8 @@ class FaissIVF(Faiss):
 
 
 class Naive(BaseEstimator):
-    def __init__(self, dataset, query_set, mu, h, args):
-        self.est = kde.NaiveKde(h, 'exponential')
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
+        self.est = kde.NaiveKde(h, kernel)
 
     def fit(self, X):
         print('fitting dataset')
