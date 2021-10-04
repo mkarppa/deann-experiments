@@ -3,3 +3,4 @@ pyyaml
 pandas
 docker
 scikit-learn
+psutil
