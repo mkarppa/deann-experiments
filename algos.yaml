@@ -4,6 +4,12 @@ ann-faiss:
   docker: deann-experiments-deann
   query:
   - [[10, 50], [0, 50, 100], [512], [1, 5, 10, 50]]
+askit:
+  constructor: Askit 
+  wrapper: askit 
+  docker: deann-experiments-askit
+  query:
+  - [10, 0.001, 512, 5] 
 hbe:
   args:
     binary: hbe

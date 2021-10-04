@@ -53,6 +53,8 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
 
         client = docker.from_env()
 
+        print(cmd)
+
         container = client.containers.run(
                     docker_tag,
                     cmd,

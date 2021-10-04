@@ -1,11 +1,21 @@
 FROM intel/oneapi-hpckit
 
-RUN apt-get update && apt-get install -y git build-essential 
+RUN apt-get update && apt-get install -y git build-essential python3-pip
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 
 RUN git clone https://github.com/maumueller/deann-askit-wrapper  #
 RUN cd deann-askit-wrapper && cd rkdtsrc && ls -l && source /deann-askit-wrapper/rkdtsrc/sourceme && make
-RUN source /deann-askit-wrapper/askit_release/treecode/sourceme.template && cd /deann-askit-wrapper/askit_release/treecode/ && make 
+RUN source /deann-askit-wrapper/askit_release/treecode/sourceme.template && cd /deann-askit-wrapper/askit_release/treecode/ && make
+
+COPY requirements.txt ./
+
+RUN pip3 install -r requirements.txt
+
+ENV PATH="/deann-askit-wrapper/askit_release/treecode/src/:${PATH}"
+
+WORKDIR /home/app
+
+ENTRYPOINT ["python3", "-u", "cmd_runner.py"]
 
