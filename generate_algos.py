@@ -51,13 +51,13 @@ if __name__ == '__main__':
             'wrapper': 'deann_wrapper'
         },
         'hbe' : {
-            'args' : { 'binary' : 'external/rehashing/bin/hbe' },
+            'args' : { 'binary' : 'hbe' },
             'constructor' : 'HBEEstimator',
             'query' : query_args_hbe,
             'wrapper' : 'hbe'
         },
         'rs' : {
-            'args' : { 'binary' : 'external/rehashing/bin/hbe' },
+            'args' : { 'binary' : 'hbe' },
             'constructor' : 'RSEstimator',
             'query' : query_args_hbe,
             'wrapper' : 'hbe'

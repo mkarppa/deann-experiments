@@ -142,11 +142,15 @@ def main():
         t0 = time.time()
         # est.fit(numpy.array(X, dtype=numpy.float32))
         est.fit(X)
-        print(f'Preprocessing took {(time.time() - t0)/1e6} ms.')
+        print(f'Preprocessing took {(time.time() - t0)} s.')
         for query_params in query_params:
             print(f'Running {algo} with {query_params}')
             results = list()
-            est.set_query_param(query_params)
+            try:
+                est.set_query_param(query_params)
+            except ValueError as e:
+                print(f'Ignoring params {query_params}. Reason: {e}')
+                continue
             # est.query(numpy.array(Y, dtype=numpy.float32))
             for rep in range(args.reps):
                 results.append(est.query(Y))
