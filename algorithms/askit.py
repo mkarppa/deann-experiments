@@ -7,6 +7,7 @@ import pandas as pd
 import re
 import subprocess
 import time
+import math
 
 from algorithms.base import BaseEstimator
 
@@ -14,7 +15,7 @@ class Askit(BaseEstimator):
 
     # TODO: Askit requires groundtruth k-nn files.
     # They are currently computed through a different workflow.
-    def __init__(self, dataset, query_set, mu, h, args):
+    def __init__(self, dataset, query_set, kernel, mu, h, args):
         self.data_dir = os.path.join(os.getcwd(), "data")
         self.dataset = dataset
         self.query_set = query_set
@@ -82,7 +83,7 @@ class Askit(BaseEstimator):
             '-test_knn_file', f'{self.data_dir}/{self.dataset}.test.knn',
             '-d', f'{self.d}',
             '-training_N', f'{self.n}',
-            '-h', f'{self.h}',
+            '-h', f'{self.h/math.sqrt(2)}',
             '-max_points', f'{self.max_points}',
             '-oversampling', f'{self.oversampling}',
             '-id_tol', f'{self.id_tol}',

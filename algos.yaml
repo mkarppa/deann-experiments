@@ -9,7 +9,7 @@ askit:
   wrapper: askit 
   docker: deann-experiments-askit
   query:
-  - [10, 0.001, 512, 5] 
+  - [[10], [0.00001, 0.001], [512], [5]] 
 hbe:
   args:
     binary: hbe
@@ -31,7 +31,7 @@ sklearn-balltree:
     - 0.0
     - 0.0
   - - 100
-    - 0.001
+    - 0.0
     - 0.5
 rs:
   constructor: RandomSampling

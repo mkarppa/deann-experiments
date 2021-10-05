@@ -27,16 +27,16 @@ def get_dataset_fn(dataset):
         os.mkdir('data')
     return os.path.join('data', '%s.hdf5' % dataset)
 
-def get_dataset(which):
+def get_dataset(which, kernel):
     hdf5_fn = get_dataset_fn(which)
-    try:
-        url = 'http://itu.dk/people/maau/kde/datasets/TODO%s.hdf5' % which
-        download(url, hdf5_fn)
-    except:
-        print("Cannot download %s" % url)
-        if which in DATASETS:
-            print("Creating dataset locally")
-            create_dataset(which)
+    # try:
+    #     url = 'http://itu.dk/people/maau/kde/datasets/TODO%s.hdf5' % which
+    #     download(url, hdf5_fn)
+    # except:
+    #     print("Cannot download %s" % url)
+    if not os.path.exists(hdf5_fn) and which in DATASETS:
+        print("Creating dataset locally")
+        create_dataset(which, kernel)
 
 
     hdf5_f = h5py.File(hdf5_fn, 'r')
@@ -48,16 +48,27 @@ def compute_norm(X, lens, q):
     v = np.maximum(np.min(lens + (q**2).sum(-1) - 2 * np.dot(X, q)), 0.0)
     return np.sqrt(v)
 
-def compute_kde(X, lens, q, b):
+def compute_kde(X, lens, q, b, kernel):
     #print(min(lens + (q**2).sum(-1) - 2 * np.dot(X, q)))
     v = np.maximum(lens + (q**2).sum(-1) - 2 * np.dot(X, q),0.0)
     # print(v)
-    return np.mean(np.exp(-np.sqrt(v)/b))
+    
+    if kernel == 'gaussian':
+        v = np.exp(-v/b/b/2)
+    else:
+        assert kernel == 'exponential'
+        v = np.exp(-np.sqrt(v)/b)
 
-def batch_kde(X, X_sq_norms, Q, Q_sq_norms, b):
-    return np.mean(np.exp(-np.sqrt(np.maximum(X_sq_norms[None,:] + Q_sq_norms[:,None] - 2*Q.dot(X.T), 0.0))/b), -1)
+    return np.mean(v)
 
-def scan_for_kde(X, Y, lower, upper, target=0.2):
+def batch_kde(X, X_sq_norms, Q, Q_sq_norms, b, kernel):
+    if kernel == 'gaussian':
+        return np.mean(np.exp(-np.maximum(X_sq_norms[None,:] + Q_sq_norms[:,None] - 2*Q.dot(X.T), 0.0)/b/b/2), -1)
+    else:
+        assert kernel == 'exponential'
+        return np.mean(np.exp(-np.sqrt(np.maximum(X_sq_norms[None,:] + Q_sq_norms[:,None] - 2*Q.dot(X.T), 0.0))/b), -1)
+
+def scan_for_kde(X, Y, kernel, lower, upper, target=0.2):
     kde_vals = np.zeros(len(Y))
     lens = (X**2).sum(-1)
     left, right = lower, upper
@@ -66,7 +77,7 @@ def scan_for_kde(X, Y, lower, upper, target=0.2):
         print(f'{lower} <= {left} <= {dist} <= {right} <= {upper}')
         print(f"Testing {dist}")
         for i in range(len(Y)):
-            kde_vals[i] = compute_kde(X, lens, Y[i], dist)
+            kde_vals[i] = compute_kde(X, lens, Y[i], dist, kernel)
         kde_val = np.median(kde_vals)
         print(f"got median kde value of {kde_val}")
         print(f'|{target}-{kde_val}|/{target} = {abs(target - kde_val)/target}')
@@ -79,7 +90,7 @@ def scan_for_kde(X, Y, lower, upper, target=0.2):
 
     return kde_val, kde_vals, dist
 
-def write_output(train, validation, test, fn, compute_bandwidth=False): #, compute_nn=False,
+def write_output(train, validation, test, fn, kernel, compute_bandwidth=False): #, compute_nn=False,
     #                     compute_dists=False):
     # normalization following Standford et al.
     #    from scipy import stats
@@ -147,26 +158,26 @@ def write_output(train, validation, test, fn, compute_bandwidth=False): #, compu
 
         print(f"Compute bandwidth based on median distance of {med_dist}")
 
-        kde, kde_vals, b = scan_for_kde(train, validation, lower=med_dist/10,
+        kde, kde_vals, b = scan_for_kde(train, validation, kernel, lower=med_dist/10,
             upper=10*med_dist,target=0.01)
         print(f"{kde} with b={b} for target={0.01}")
-        f.attrs['kde.validation.01'] = (kde, b)
+        f.attrs[f'kde.validation.{kernel}.01'] = (kde, b)
         # f.create_dataset('kde.01', kde_vals.shape, dtype=kde_vals.dtype)[:] = kde_vals
-        f.create_dataset('kde.validation.01', data = kde_vals)
-        kde_vals = batch_kde(train, train_lengths, test, test_lengths, b)
+        f.create_dataset(f'kde.validation.{kernel}.01', data = kde_vals)
+        kde_vals = batch_kde(train, train_lengths, test, test_lengths, b, kernel)
         kde = np.median(kde_vals)
-        f.create_dataset('kde.test.01', data = kde_vals)
-        f.attrs['kde.test.01'] = (kde,b)
+        f.create_dataset(f'kde.test.{kernel}.01', data = kde_vals)
+        f.attrs[f'kde.test.{kernel}.01'] = (kde,b)
 
         for target in [0.001, 0.0001, 0.00001]:
-            kde, kde_vals, b = scan_for_kde(train, validation, b/10, b, target=target)
-            print(f"{kde} with b={b} for target={target}")
-            ds_str = 'kde.validation' + '{:f}'.format(target).strip('0')
+            kde, kde_vals, b = scan_for_kde(train, validation, kernel, b/10, b, target=target)
+            print(f"{kde} with b={b} for target={target} / kernel={kernel}")
+            ds_str = 'kde.validation.' + kernel + '{:f}'.format(target).strip('0')
             # f.create_dataset(ds_str, kde_vals.shape, dtype=kde_vals.dtype)[:] = kde_vals
             f.create_dataset(ds_str, data = kde_vals)
             f.attrs[ds_str] = (kde, b)
-            ds_str = 'kde.test' + '{:f}'.format(target).strip('0')
-            kde_vals = batch_kde(train, train_lengths, test, test_lengths, b)
+            ds_str = 'kde.test.' + kernel + '{:f}'.format(target).strip('0')
+            kde_vals = batch_kde(train, train_lengths, test, test_lengths, b, kernel)
             kde = np.median(kde_vals)
             f.create_dataset(ds_str, data = kde_vals)
             f.attrs[ds_str] = (kde, b)
@@ -777,7 +788,7 @@ DATASETS = {
 
 
 
-def create_dataset(dataset, compute_bandwidth=True): #, compute_nn=False, compute_dists=False):
+def create_dataset(dataset, kernel, compute_bandwidth=True):
     fn = get_dataset_fn(dataset)
 
     if not os.path.exists('data'):
@@ -815,7 +826,7 @@ def create_dataset(dataset, compute_bandwidth=True): #, compute_nn=False, comput
     # free memory
     del X
 
-    write_output(train, validation, test, output_filename, compute_bandwidth)
+    write_output(train, validation, test, output_filename, kernel, compute_bandwidth)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -835,9 +846,14 @@ def main():
     #     '--compute-dists',
     #     action="store_true"
     # )
+    parser.add_argument(
+        '--kernel',
+        choices=['gaussian','exponential'],
+        default='gaussian'
+    )
     args = parser.parse_args()
     #DATASETS[args.dataset](fn, args.compute_bandwidth, args.compute_nn)
-    create_dataset(args.dataset, args.compute_bandwidth)
+    create_dataset(args.dataset, args.kernel, args.compute_bandwidth)
 
 
 

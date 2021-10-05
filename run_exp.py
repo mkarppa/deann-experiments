@@ -36,13 +36,14 @@ def blacklist_algo(algo, build_args, query_args, args, err):
     # experiments
     return json.dumps(query_args)
 
-def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
+def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set, 
     build_args, query_args, bw, mu, timeout=3600, blacklist=False, args=None):
 
     while len(json.loads(query_args)) > 0:
         cmd = ['--dataset', dataset,
             '--algorithm', algo,
             '--wrapper', wrapper,
+            '--kernel', kernel,
             '--constructor', constructor,
             '--mu', str(mu),
             '--bw', str(bw),
@@ -99,7 +100,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constru
             container.remove(force=True)
         break
 
-def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, constructor, reps, query_set, 
+def run_no_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set, 
     build_args, query_args, bw, mu):
     cmd = ['--dataset', dataset,
            '--algorithm', algo,
@@ -117,18 +118,18 @@ def run_no_docker(cpu_limit, mem_limit, dataset, algo, docker_tag, wrapper, cons
 
 def run_worker(args, queue, i):
     while not queue.empty():
-        algo, bw, algo_def, build_args, query_args = queue.get()
+        algo, bw, kernel, algo_def, build_args, query_args = queue.get()
         avail_mem = psutil.virtual_memory().available
         mem_limit = min(avail_mem, int(32e9)) # use max 32gb
         
         cpu_limit = i
 
         if not args.no_docker:
-            run_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
+            run_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
                 args.reps, args.query_set, build_args, query_args, 
                 bw, args.kde_value, args.timeout, args.blacklist, args)
         else:
-            run_no_docker(cpu_limit, mem_limit, args.dataset, algo, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
+            run_no_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
                 args.reps, args.query_set, build_args, query_args, 
                 bw, args.kde_value)
 
@@ -189,12 +190,19 @@ def main():
         type=int,
         default=0
     )
+    parser.add_argument(
+        '--kernel',
+        choices=['exponential','gaussian'],
+        default='gaussian'
+    )
     args = parser.parse_args()
 
     with open(args.definition, 'r') as f:
         definitions = yaml.load(f, Loader=yaml.Loader)
 
     print(definitions)
+
+    kernel = args.kernel
 
     if args.list_algorithms:
         print("Available algorithms:")
@@ -203,11 +211,11 @@ def main():
 
     print(f"Running on {args.dataset}")
     dataset_name = args.dataset
-    dataset = get_dataset(dataset_name)
+    dataset = get_dataset(dataset_name, kernel)
     print(dataset)
 
     mu = args.kde_value
-    kde_str = 'kde.' + args.query_set + '{:f}'.format(mu).strip('0')
+    kde_str = 'kde.' + args.query_set + f'.{kernel}' + '{:f}'.format(mu).strip('0')
     _, bw = dataset.attrs[kde_str]
 
     print(f"Running with bandwidth {bw} to achieve kde value {mu}.")
@@ -219,8 +227,8 @@ def main():
         algorithms = list(definitions.keys())
 
 
-    tau = np.percentile(np.array(dataset[f'kde.{args.query_set}' + f'{mu:f}'.strip('0')], dtype=np.float32),
-                            1)
+    #tau = np.percentile(np.array(dataset[f'kde.{args.query_set}' + f'{mu:f}'.strip('0')], dtype=np.float32),
+     #                       1)
 
     exps = {}
 
@@ -251,7 +259,7 @@ def main():
 
     queue = multiprocessing.Queue()
     for algo, params_dict in exps.items():
-            queue.put((algo, bw, definitions[algo], params_dict["build"], json.dumps(params_dict["query"])))
+            queue.put((algo, bw, kernel, definitions[algo], params_dict["build"], json.dumps(params_dict["query"])))
     workers = [multiprocessing.Process(target=run_worker, args=(args, queue, i)) for i in range(args.cpu, args.cpu + 1)]
     [worker.start() for worker in workers]
     [worker.join() for worker in workers]

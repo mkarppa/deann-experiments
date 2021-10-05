@@ -58,12 +58,15 @@ def run_from_cmdline(args=None):
     parser.add_argument(
         '--algorithm',
     )
+    parser.add_argument(
+        '--kernel',
+    )
     args = parser.parse_args(args)
 
     query_args = json.loads(args.query_args)
     build_args = json.loads(args.build_args)
 
-    dataset = get_dataset(args.dataset)
+    dataset = get_dataset(args.dataset, args.kernel)
     algo = args.algorithm
 
     X = np.array(dataset['train'], dtype=np.float32)
@@ -73,7 +76,7 @@ def run_from_cmdline(args=None):
 
     mod = __import__(f'algorithms.{args.wrapper}', fromlist=[args.constructor])
     Est_class = getattr(mod, args.constructor)
-    est = Est_class(args.dataset, args.query_set, args.mu, args.bw, build_args)
+    est = Est_class(args.dataset, args.query_set, args.kernel, args.mu, args.bw, build_args)
     print(f'Running {algo}')
     t0 = time.time()
     # est.fit(numpy.array(X, dtype=numpy.float32))
