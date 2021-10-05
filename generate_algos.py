@@ -28,17 +28,20 @@ if __name__ == '__main__':
     algos = {
         'naive' : {
             'constructor' : 'Naive',
-            'wrapper': 'deann_wrapper'
+            'wrapper'     : 'deann_wrapper',
+            'docker'      : 'deann-experiments-deann' 
         },
         'ann-faiss' : {
             'constructor' : 'ANNFaiss',
             'query' : query_args,
-            'wrapper': 'deann_wrapper'
+            'wrapper': 'deann_wrapper',
+            'docker'      : 'deann-experiments-deann'                         
         },
         'ann-permuted-faiss' : {
             'constructor' : 'ANNPermutedFaiss',
             'query' : query_args,
-            'wrapper': 'deann_wrapper'
+            'wrapper': 'deann_wrapper',
+            'docker'      : 'deann-experiments-deann' 
         },
         'random-sampling' : {
             'constructor' : 'RandomSampling',
@@ -48,29 +51,34 @@ if __name__ == '__main__':
         'rsp' : {
             'constructor' : 'RandomSamplingPermuted',
             'query' : mks,
-            'wrapper': 'deann_wrapper'
+            'wrapper': 'deann_wrapper',
+            'docker'      : 'deann-experiments-deann'
         },
         'hbe' : {
             'args' : { 'binary' : 'hbe' },
             'constructor' : 'HBEEstimator',
             'query' : query_args_hbe,
-            'wrapper' : 'hbe'
+            'wrapper' : 'hbe',
+            'docker' : 'deann-experiments-hbe'
         },
         'rs' : {
             'args' : { 'binary' : 'hbe' },
             'constructor' : 'RSEstimator',
             'query' : query_args_hbe,
-            'wrapper' : 'hbe'
+            'wrapper' : 'hbe',
+            'docker' : 'deann-experiments-hbe'
         },
         'sklearn-balltree' : {
             'constructor' : 'SklearnBallTreeEstimator',
             'query' : query_args_sklearn,
             'wrapper' : 'sklearn',
+            'docker' : 'deann-experiments-sklearn'
         },
         'sklearn-kdtree' : {
             'constructor' : 'SklearnKDTreeEstimator',
             'query' : query_args_sklearn,
             'wrapper' : 'sklearn',
+            'docker' : 'deann-experiments-sklearn'
         }
     }
     print(yaml.dump(algos))
