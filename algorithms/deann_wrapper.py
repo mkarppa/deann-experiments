@@ -140,9 +140,12 @@ class Naive(BaseEstimator):
         self.est = kde.NaiveKde(h, kernel)
 
     def fit(self, X):
+        t0 = time.time()
         print('fitting dataset')
         self.X = X
         self.est.fit(X)
+        fit_time = time.time() - t0
+        self.build_time = max(self.build_time, fit_time)
 
     def query(self, Y):
         t0 = time.time()
@@ -277,6 +280,7 @@ class ANNFaiss(ANN):
         self.X = None
 
     def set_query_param(self, param):
+        t0 = time.time()
         super().set_query_param(param[:2])
         self.n_list = param[2]
         self.n_probe = param[3]
@@ -284,10 +288,15 @@ class ANNFaiss(ANN):
             self.ann_object._n_list = self.n_list
             if self.X is not None:
                 self.ann_object.fit(self.X)
+        query_param_time = time.time() - t0
+        self.build_time = max(query_param_time, self.build_time)
 
     def fit(self, X):
         self.X = np.array(X, dtype=np.float32)
+        t0 = time.time()
         self.est.fit(self.X)
+        fit_time = time.time() - t0
+        self.build_time = max(fit_time, self.build_time)
 
 
     def query(self, Y):
