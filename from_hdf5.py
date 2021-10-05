@@ -55,7 +55,7 @@ def write_config(name, n, d, m, bw):
     f.close()
 
 
-def create_dataset(fn):
+def create_dataset(fn, kernel):
     if 'HBE' not in os.environ:
         print('Error: Please set environmental variable HBE to point to your HBE installation')
         exit(1)
@@ -64,10 +64,14 @@ def create_dataset(fn):
 
     with h5py.File(fn, 'r') as f:
         for dataset in ['train', 'validation', 'test',
-                            'kde.validation.01', 'kde.validation.001',
-                            'kde.validation.0001', 'kde.validation.00001',
-                            'kde.test.01', 'kde.test.001',
-                            'kde.test.0001', 'kde.test.00001']:
+                            f'kde.validation.{kernel}.01',
+                            f'kde.validation.{kernel}.001',
+                            f'kde.validation.{kernel}.0001',
+                            f'kde.validation.{kernel}.00001',
+                            f'kde.test.{kernel}.01',
+                            f'kde.test.{kernel}.001',
+                            f'kde.test.{kernel}.0001',
+                            f'kde.test.{kernel}.00001']:
             np.savetxt(f'/{os.environ["HBE"]}/resources/data/{ds_name}' +
                            f'.{dataset}.csv',
                            np.array(f[dataset]), delimiter=',')

@@ -42,8 +42,11 @@ if __name__ == "__main__":
         #print(f"Checking {f}")
         with h5py.File(os.path.join("data", f"{f.attrs['dataset']}.hdf5"), 'r') as g:
             try:
-                ground_truth = np.array(g[f'kde.{query_set}' + f'{mu:f}'.strip('0')])
-
+                ground_truth_gaussian_str = f'kde.{query_set}.gaussian' + f'{mu:f}'.strip('0')
+                assert ground_truth_gaussian_str in g
+                ground_truth = np.array(g[ground_truth_gaussian_str])
+                # an ugly kludge to remove NaNs
+                ground_truth[ground_truth == 0.0] = np.finfo(np.float32).tiny
                 err_array = np.abs(np.array(f['estimates']) - ground_truth[:,None])/ground_truth[:,None]
 
                 # this is a very ugly kludge
