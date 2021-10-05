@@ -789,7 +789,6 @@ DATASETS = {
 
 
 def create_dataset(dataset, kernel, compute_bandwidth=True):
-    print(f'create_dataset dataset={dataset} kernel={kernel} compute_bandwidth={compute_bandwidth}')
     fn = get_dataset_fn(dataset)
 
     if not os.path.exists('data'):
@@ -847,9 +846,14 @@ def main():
     #     '--compute-dists',
     #     action="store_true"
     # )
+    parser.add_argument(
+        '--kernel',
+        choices=['gaussian','exponential'],
+        default='gaussian'
+    )
     args = parser.parse_args()
     #DATASETS[args.dataset](fn, args.compute_bandwidth, args.compute_nn)
-    create_dataset(args.dataset, args.compute_bandwidth)
+    create_dataset(args.dataset, args.kernel, args.compute_bandwidth)
 
 
 

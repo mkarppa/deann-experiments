@@ -17,8 +17,8 @@ if __name__ == '__main__':
 
     query_args = list(sorted([[mk,mk,n_list,1] for (mk,n_list) in product(mks,n_lists)], key=itemgetter(2)))
 
-    epsilons = np.round(np.arange(1.5,0.55,-0.05),5).tolist()
-    taus = np.round([0.01 / sqrt(2)**i for i in range(16)],5).tolist()
+    epsilons = np.round(np.arange(1.5,0.05,-0.05),5).tolist()
+    taus = np.round([0.01 / sqrt(2)**i for i in range(20)],5).tolist()
     query_args_hbe = list(sorted([[eps,tau] for (eps,tau) in product(epsilons,taus)], key=itemgetter(1), reverse=True))
 
     ls = [int(round(10*sqrt(2)**i)) for i in range(10)]
