@@ -1,0 +1,19 @@
+FROM continuumio/miniconda3:latest
+
+RUN apt update && apt -y upgrade
+RUN apt update && apt install -y build-essential cmake wget doxygen libboost-all-dev
+
+RUN conda install -y scikit-learn h5py psutil pyyaml pandas
+
+RUN git clone https://github.com/maumueller/rehashing && cd rehashing/hbe && \
+    git submodule init && git submodule update && \ 
+    mkdir build && cd build && cmake ../lib/eigen-git-mirror && cd ../lib/config4cpp && make && cd ../.. && \
+    cmake . && make
+
+ENV PATH="/rehashing/hbe/:${PATH}"
+ENV HBE="/rehashing/"
+
+WORKDIR /home/app
+
+ENTRYPOINT ["python3", "-u", "cmd_runner.py"]
+

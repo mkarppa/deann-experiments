@@ -1,0 +1,6 @@
+h5py
+pyyaml
+pandas
+docker
+scikit-learn
+psutil

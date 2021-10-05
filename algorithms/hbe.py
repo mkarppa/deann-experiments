@@ -40,8 +40,8 @@ class RSEstimator(BaseEstimator):
             print(self.cmd(f.name).split())
             res = subprocess.run(self.cmd(f.name).split(),
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE).stdout\
-                                    .decode('utf-8').strip()
+                                    stderr=subprocess.PIPE)
+            res = res.stdout.decode('utf-8').strip()
             end = time.time()
             print(f'{end-start}')
             print(f'writing log to {logfilename}')
@@ -103,6 +103,8 @@ class RSEstimator(BaseEstimator):
                     processed_results['est'].append(float(m.group(2)))
                     processed_results['samples'].append(float(m.group(3)))
                     processed_results['time'].append(float(m.group(4)))
+                if m := re.match(r"Adaptive Table Init: (\S+)", line):
+                    self.build_time = float(m.group(1))
         return pd.DataFrame(processed_results)
 
     def name(self):

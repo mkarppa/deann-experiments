@@ -1,5 +1,8 @@
 
 class BaseEstimator:
+
+    build_time = 0
+
     def fit(self, X):
         raise NotImplementedError()
 

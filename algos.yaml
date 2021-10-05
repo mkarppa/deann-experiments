@@ -1,13 +1,21 @@
 ann-faiss:
   constructor: ANNFaiss
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
   query:
   - [[10, 50], [0, 50, 100], [512], [1, 5, 10, 50]]
+askit:
+  constructor: Askit 
+  wrapper: askit 
+  docker: deann-experiments-askit
+  query:
+  - [[10], [0.00001, 0.001], [512], [5]] 
 hbe:
   args:
     binary: hbe
   constructor: HBEEstimator
   wrapper: hbe 
+  docker: deann-experiments-hbe
   query:
   - [[0.75, 1.0, 2.0, 3.0], [0.0001]]
 naive:
@@ -17,16 +25,18 @@ naive:
 sklearn-balltree:
   constructor: SklearnBallTreeEstimator
   wrapper: sklearn
+  docker: deann-experiments-sklearn
   query:
   - - 10
     - 0.0
     - 0.0
   - - 100
-    - 0.001
+    - 0.0
     - 0.5
 rs:
   constructor: RandomSampling
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
   query: &id001
   - 10
   - 30
@@ -63,11 +73,13 @@ random-sampling:
     binary: hbe
   constructor: RSEstimator
   wrapper: hbe
+  docker: deann-experiments-hbe
   query:
     - - 0.5
       - 0.0001
 rsp:
   constructor: RandomSamplingPermuted
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
   query: *id001
 

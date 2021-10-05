@@ -11,12 +11,14 @@ jobs:
 
     - name: Install 
       run: |
-        docker build . -t deann-experiments
+          pip3 install -r requirements.txt
+          python3 install.py
         
-    - name: Run experiments on shuffle
+        
+    - name: Run experiments on shuttle
       run: | 
-        docker run -v "$(pwd)":/app/:rw -t deann-experiments python run_exp.py
-        docker run -v "$(pwd)":/app/:rw -t deann-experiments python data_export.py -o res.csv
-         docker run -v "$(pwd)":/app/:rw -t deann-experiments python additional/tabulate_results.py -i res.csv show-best
+          python3 run_exp.py --algorithm ann-faiss --cpu 0
+          python3 data_export.py -o res.csv
+          python3 additional/tabulate_results.py -i res.csv show-best
 
 
