@@ -22,7 +22,9 @@ class SklearnKDTreeEstimator(BaseEstimator):
         temp_est = KernelDensity(bandwidth = self.h, kernel = self.kernel)
         temp_est.fit(np.zeros((1,d)))
         self.constant = -temp_est.score(np.zeros((1,d)))
+        t0 = time.time()
         self.est.fit(X)
+        self.build_time = time.time() - t0
 
     def query(self, Y):
         t0 = time.time()

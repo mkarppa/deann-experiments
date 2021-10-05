@@ -89,12 +89,13 @@ def run_from_cmdline(args=None):
         # est.query(numpy.array(Y, dtype=numpy.float32))
         for rep in range(args.reps):
             results.append(est.query(Y))
-        try:
-            processed_results = est.process_results(results)
-            write_result(processed_results, args.dataset, 
-                args.mu, args.query_set, algo, args.build_args, json.dumps(query_params))
-        except:
-            print(f"Error processing {algo} with {query_params}")
+        #try:
+        processed_results = est.process_results(results)
+        write_result(processed_results, args.dataset, 
+            args.mu, args.query_set, algo, args.build_args, json.dumps(query_params),
+            build_time=est.build_time)
+        #except:
+        #    print(f"Error processing {algo} with {query_params}")
 
 if __name__ == "__main__":
     run_from_cmdline()

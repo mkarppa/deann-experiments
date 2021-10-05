@@ -36,6 +36,7 @@ sklearn-balltree:
 rs:
   constructor: RandomSampling
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
   query: &id001
   - 10
   - 30
@@ -72,11 +73,13 @@ random-sampling:
     binary: hbe
   constructor: RSEstimator
   wrapper: hbe
+  docker: deann-experiments-hbe
   query:
     - - 0.5
       - 0.0001
 rsp:
   constructor: RandomSamplingPermuted
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
   query: *id001
 

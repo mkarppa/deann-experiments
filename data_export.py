@@ -11,7 +11,8 @@ def get_all_results():
                 yield h5py.File(os.path.join(dirpath, f), 'r')
 
 if __name__ == "__main__":
-    d = {"dataset": [], "query_set": [], "mu": [], "algorithm": [], "params": [], "rel_err": [], "samples": [], "query_time": []}
+    d = {"dataset": [], "query_set": [], "mu": [], "algorithm": [], "params": [], "rel_err": [], "samples": [], "query_time": [],
+         "build_time": []}
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--mu', default = None, type=float)
@@ -30,6 +31,7 @@ if __name__ == "__main__":
         dataset = f.attrs["dataset"]
         mu = f.attrs["mu"]
         query_set = f.attrs['query_set']
+        build_time = f.attrs['build_time']
 
         if args.mu is not None and args.mu != mu:
             continue
@@ -67,6 +69,7 @@ if __name__ == "__main__":
                 d['samples'].append(np.mean(f['samples']))
                 d['query_time'].append(np.mean(f['times']))
                 d['params'].append(f.attrs['params'])
+                d['build_time'].append(build_time)
             except Exception as e:
                 print(f"Couldn't process {f.filename}: {e}")
         f.close()

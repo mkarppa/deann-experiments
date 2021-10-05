@@ -13,7 +13,7 @@ def result_exists(dataset, mu, query_set, algo, args_str, query_str):
         algo, args_str, query_str))
 
 
-def write_result(res, ds, mu, query_set, algo, args_str, query_str, err=None):
+def write_result(res, ds, mu, query_set, algo, args_str, query_str, err=None, build_time=0):
     # ids, ests, samples, times = algo.process_result()
     # if len(ids) != m:
     #     print(f"Couldn't fetch results for {algo.name()} running with {str(algo)}.")
@@ -26,6 +26,7 @@ def write_result(res, ds, mu, query_set, algo, args_str, query_str, err=None):
         f.attrs['params'] = args_str + "_" + query_str 
         f.attrs['mu'] = mu
         f.attrs['query_set'] = query_set
+        f.attrs['build_time'] = build_time 
         if err:
             f.attrs['err'] = err
         else:
