@@ -7,6 +7,7 @@ import pandas as pd
 class SklearnKDTreeEstimator(BaseEstimator):
     def __init__(self, dataset, query_set, kernel, mu, h, args):
         self.h = h
+        self.kernel = kernel
         self.est = KernelDensity(algorithm = 'kd_tree', bandwidth = h,
                                      kernel = kernel)
 
@@ -18,7 +19,7 @@ class SklearnKDTreeEstimator(BaseEstimator):
 
     def fit(self, X):
         self.n, d = X.shape
-        temp_est = KernelDensity(bandwidth = self.h, kernel = 'exponential')
+        temp_est = KernelDensity(bandwidth = self.h, kernel = self.kernel)
         temp_est.fit(np.zeros((1,d)))
         self.constant = -temp_est.score(np.zeros((1,d)))
         self.est.fit(X)
@@ -68,6 +69,7 @@ class SklearnKDTreeEstimator(BaseEstimator):
 class SklearnBallTreeEstimator(SklearnKDTreeEstimator):
     def __init__(self, dataset, query_set, kernel, mu, h, args):
         self.h = h
+        self.kernel = kernel
         self.est = KernelDensity(algorithm = 'ball_tree', bandwidth = h,
                                      kernel = kernel)
 
