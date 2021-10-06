@@ -8,7 +8,7 @@ import faiss
 import deann as kde
 
 import time
-import pandas as pd 
+import pandas as pd
 
 # This is a modified copy of the following file:
 # https://github.com/erikbern/ann-benchmarks/blob/master/ann_benchmarks/algorithms/base.py
@@ -55,7 +55,7 @@ class BruteNN(BaseANN):
             raise ValueError(f'invalid metric ``{metric}\'\' supplied')
         self._return_dists = return_dists
         self._return_samples = return_samples
-    
+
     def fit(self, X):
         self._nn = NearestNeighbors(algorithm='brute', metric=self._metric)
         self._nn.fit(X)
@@ -332,6 +332,7 @@ class ANNPermutedFaiss(ANNPermuted):
         self.X = None
 
     def set_query_param(self, param):
+        t0 = time.time()
         super().set_query_param(param[:2])
         self.n_list = param[2]
         self.n_probe = param[3]
@@ -339,10 +340,15 @@ class ANNPermutedFaiss(ANNPermuted):
             self.ann_object._n_list = self.n_list
             if self.X is not None:
                 self.ann_object.fit(self.X)
+        set_query_param_time = time.time() - t0
+        self.build_time = max(set_query_param_time, self.build_time)
 
     def fit(self, X):
         self.X = np.array(X, dtype=np.float32)
+        t0 = time.time()
         self.est.fit(self.X)
+        fit_time = time.time() - t0
+        self.build_time = max(fit_time, self.build_time)
 
 
     def query(self, Y):
