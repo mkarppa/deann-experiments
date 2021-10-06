@@ -31,7 +31,7 @@ class Askit(BaseEstimator):
         with NamedTemporaryFile('w', delete=True) as f:
             start = time.time()
             print(" ".join(self.cmd()))
-            res = subprocess.run(self.cmd(), 
+            res = subprocess.run(self.cmd(),
                 stdout=subprocess.PIPE)
             end = time.time()
 
@@ -83,7 +83,7 @@ class Askit(BaseEstimator):
             '-test_knn_file', f'{self.data_dir}/{self.dataset}.test.knn',
             '-d', f'{self.d}',
             '-training_N', f'{self.n}',
-            '-h', f'{self.h/math.sqrt(2)}',
+            '-h', f'{self.h}',
             '-max_points', f'{self.max_points}',
             '-oversampling', f'{self.oversampling}',
             '-id_tol', f'{self.id_tol}',
