@@ -46,7 +46,8 @@ if __name__ == '__main__':
         'random-sampling' : {
             'constructor' : 'RandomSampling',
             'query' : mks,
-            'wrapper': 'deann_wrapper'
+            'wrapper': 'deann_wrapper',
+            'docker'      : 'deann-experiments-deann'
         },
         'rsp' : {
             'constructor' : 'RandomSamplingPermuted',
