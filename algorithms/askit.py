@@ -70,6 +70,9 @@ class Askit(BaseEstimator):
                     processed_results['est'].append(float(m.group(2)))
                     processed_results['samples'].append(float(m.group(3)))
                     processed_results['time'].append(float(m.group(4)))
+                m = re.match(r"BUILD TIME: (\S+)", line)
+                if m:
+                    self.build_time = float(m.group(1))
         return pd.DataFrame(processed_results)
 
     def name(self):
