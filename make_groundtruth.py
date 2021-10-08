@@ -26,12 +26,12 @@ def knn_ground_truth(X, k):
 
 
 def usbin_write(ids, dist, fname):
-    ids = np.ascontiguousarray(ids, dtype="int64")
-    dist = np.ascontiguousarray(dist, dtype="float64")
+    ids = np.ascontiguousarray(ids, dtype="int32")
+    dist = np.ascontiguousarray(dist, dtype="float32")
     assert ids.shape == dist.shape
     f = open(fname, "wb")
     n, d = dist.shape
-    np.array([n, d], dtype='uint32').tofile(f)
+    np.array([n, d], dtype='int32').tofile(f)
     ids.tofile(f)
     dist.tofile(f)
 
