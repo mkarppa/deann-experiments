@@ -29,14 +29,14 @@ def blacklist_algo(algo, build_args, query_args, args, err):
         qa = json.dumps(query_args.pop(0))
         if result_exists(args.dataset, args.kde_value, args.query_set, algo, build_args, qa):
             continue
-        write_result(None, args.dataset, args.kde_value, args.query_set, 
+        write_result(None, args.dataset, args.kde_value, args.query_set,
             algo, build_args, qa,err=err)
         break
-    # return the set of query parameters not inspected so far to continue running 
+    # return the set of query parameters not inspected so far to continue running
     # experiments
     return json.dumps(query_args)
 
-def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set, 
+def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set,
     build_args, query_args, bw, mu, timeout=3600, blacklist=False, args=None):
 
     while len(json.loads(query_args)) > 0:
@@ -64,6 +64,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
                             {'bind': '/home/app/', 'mode': 'rw'},
                     },
                     mem_limit=mem_limit,
+                    memswap_limit=mem_limit,
                     cpuset_cpus=str(cpu_limit),
                     detach=True)
 
@@ -100,7 +101,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
             container.remove(force=True)
         break
 
-def run_no_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set, 
+def run_no_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set,
     build_args, query_args, bw, mu):
     cmd = ['--dataset', dataset,
            '--algorithm', algo,
@@ -113,7 +114,7 @@ def run_no_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapp
            '--build-args', '' + build_args + '',
            '--query-args', '' + query_args + '']
 
-    print(" ".join(cmd)) 
+    print(" ".join(cmd))
     run_from_cmdline(cmd)
 
 def run_worker(args, queue, i):
@@ -121,16 +122,16 @@ def run_worker(args, queue, i):
         algo, bw, kernel, algo_def, build_args, query_args = queue.get()
         avail_mem = psutil.virtual_memory().available
         mem_limit = min(avail_mem, int(32e9)) # use max 32gb
-        
+
         cpu_limit = i
 
         if not args.no_docker:
-            run_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
-                args.reps, args.query_set, build_args, query_args, 
+            run_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"],
+                args.reps, args.query_set, build_args, query_args,
                 bw, args.kde_value, args.timeout, args.blacklist, args)
         else:
-            run_no_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"], 
-                args.reps, args.query_set, build_args, query_args, 
+            run_no_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"],
+                args.reps, args.query_set, build_args, query_args,
                 bw, args.kde_value)
 
 def main():
@@ -245,7 +246,7 @@ def main():
                 qps = product(*query_params)
             else:
                 qps = [query_params]
-            for qp in qps: 
+            for qp in qps:
                 query_str = json.dumps(qp)
                 if args.force or not os.path.exists(get_result_fn(dataset_name, mu, args.query_set, algo, args_str, query_str)):
                     exps[algo]["query"].append(qp)
