@@ -40,7 +40,9 @@ class RSEstimator(BaseEstimator):
             print(self.cmd(f.name).split())
             res = subprocess.run(self.cmd(f.name).split(),
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+                                    stderr=subprocess.PIPE,
+                                    check=True)
+
             res = res.stdout.decode('utf-8').strip()
             end = time.time()
             print(f'{end-start}')

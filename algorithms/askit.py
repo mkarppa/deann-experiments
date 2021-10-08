@@ -32,7 +32,7 @@ class Askit(BaseEstimator):
             start = time.time()
             print(" ".join(self.cmd()))
             res = subprocess.run(self.cmd(),
-                stdout=subprocess.PIPE)
+                stdout=subprocess.PIPE, check=True)
             end = time.time()
 
             res = res.stdout.decode('utf-8').strip()
@@ -80,10 +80,10 @@ class Askit(BaseEstimator):
 
     def cmd(self,):
         cmd = ['askit_deann_wrapper.exe',
-            '-training_data', f'{self.data_dir}/{self.dataset}.train',
-            '-test_data', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validate"}',
+            '-training_data', f'{self.data_dir}/{self.dataset}.train.data',
+            '-test_data', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validate"}.data',
             '-training_knn_file', f'{self.data_dir}/{self.dataset}.train.knn',
-            '-test_knn_file', f'{self.data_dir}/{self.dataset}.test.knn',
+            '-test_knn_file', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validate"}.knn',
             '-d', f'{self.d}',
             '-training_N', f'{self.n}',
             '-h', f'{self.h}',

@@ -65,6 +65,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
                     },
                     mem_limit=mem_limit,
                     memswap_limit=mem_limit,
+                    mem_swappiness=0,
                     cpuset_cpus=str(cpu_limit),
                     detach=True)
 
@@ -88,7 +89,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
                 print(container.logs().decode())
                 print('Child process for container %s raised exception %d' % (container.short_id, exit_code))
                 if blacklist:
-                    query_args = blacklist_algo(algo, build_args, query_args, args, err=container.logs.decode())
+                    query_args = blacklist_algo(algo, build_args, query_args, args, err=container.logs().decode())
                     continue
         except:
             print('Container.wait for container %s failed with exception' % container.short_id)
