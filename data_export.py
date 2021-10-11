@@ -4,16 +4,12 @@ import os
 import pandas as pd
 import argparse
 
-def get_all_results():
-    for dirpath, _, files in os.walk("results"):
-        for f in files:
-            if f.endswith('hdf5'):
-                yield h5py.File(os.path.join(dirpath, f), 'r')
+from result import get_all_results
 
 if __name__ == "__main__":
     d = {"dataset": [], "query_set": [], "mu": [], "algorithm": [], "params": [], "rel_err": [], "samples": [], "query_time": [],
          "build_time": []}
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--mu', default = None, type=float)
     parser.add_argument('--dataset', default = None, type=str)
@@ -25,7 +21,7 @@ if __name__ == "__main__":
     parser.add_argument('--max-err', default = None, type=float)
     parser.add_argument('-o', default = None, type=str, help='output as csv')
     args = parser.parse_args()
-    
+
     for f in get_all_results():
         algorithm = f.attrs["algorithm"]
         dataset = f.attrs["dataset"]
@@ -56,12 +52,12 @@ if __name__ == "__main__":
                 # print(err_array)
                 # if algorithm.startswith('sklearn') and 'atol=0.0,' in f.attrs['params']:
                 #    err_array[err_array > 10] = 0
-                
+
                 rel_err = np.mean(err_array)
-                
+
                 if args.max_err is not None and rel_err > args.max_err:
                     continue
-            
+
                 d['algorithm'].append(algorithm)
                 d['dataset'].append(dataset)
                 d['query_set'].append(query_set)

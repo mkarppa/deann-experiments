@@ -12,6 +12,23 @@ def result_exists(dataset, mu, query_set, algo, args_str, query_str):
     return os.path.exists(get_result_fn(dataset, mu, query_set, 
         algo, args_str, query_str))
 
+def get_all_results(ds=None, algo=None, query_set=None, mu=None):
+    dir_name = "results"
+    if ds:
+        dir_name = os.path.join(dir_name, ds)
+    if query_set:
+        dir_name = os.path.join(dir_name, query_set)
+    if algo:
+        dir_name = os.path.join(dir_name, algo)
+    if mu:
+        dir_name = os.path.join(dir_name, str(mu))
+
+    for dirpath, _, files in os.walk(dir_name):
+        for f in files:
+            if f.endswith('hdf5'):
+                yield h5py.File(os.path.join(dirpath, f), 'r')
+
+
 
 def write_result(res, ds, mu, query_set, algo, args_str, query_str, err=None, build_time=0):
     # ids, ests, samples, times = algo.process_result()
