@@ -21,6 +21,7 @@ hbe:
     binary: hbe
   constructor: HBEEstimator
   wrapper: hbe 
+  separate-queries: True
   docker: deann-experiments-hbe
   query:
   - [[0.75, 1.0, 2.0, 3.0], [0.0001]]

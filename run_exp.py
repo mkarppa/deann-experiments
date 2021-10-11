@@ -21,10 +21,13 @@ import docker
 import traceback
 import psutil
 
+from hacks import filter_run
+
 def blacklist_algo(algo, build_args, query_args, args, err):
     # blacklist the first query argument which doesn't exist as a file
     # the assumption is that this is the one that produced an error and should not be re-run
-    query_args = json.loads(query_args)
+    if len(query_args) == 0:
+        return []
     while True:
         qa = json.dumps(query_args.pop(0))
         if result_exists(args.dataset, args.kde_value, args.query_set, algo, build_args, qa):
@@ -34,12 +37,23 @@ def blacklist_algo(algo, build_args, query_args, args, err):
         break
     # return the set of query parameters not inspected so far to continue running
     # experiments
-    return json.dumps(query_args)
+    return query_args
 
 def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set,
-    build_args, query_args, bw, mu, timeout=3600, blacklist=False, args=None):
+    build_args, query_args, bw, mu, timeout=3600, blacklist=False, separate_queries=False, args=None):
 
-    while len(json.loads(query_args)) > 0:
+    query_args = json.loads(query_args)
+
+    while len(query_args) > 0:
+        if separate_queries:
+            run = query_args.pop(0)
+            query_args_str = json.dumps([run])
+            if filter_run(algo, dataset, query_set, mu, run):
+                continue
+        else:
+            query_args_str = json.dumps(query_args)
+
+        
         cmd = ['--dataset', dataset,
             '--algorithm', algo,
             '--wrapper', wrapper,
@@ -50,7 +64,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
             '--reps', str(reps),
             '--query-set', query_set,
             '--build-args', '' + build_args + '',
-            '--query-args', '' + query_args + '']
+            '--query-args', '' + query_args_str + '']
 
         client = docker.from_env()
 
@@ -85,18 +99,16 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
                 exit_code = exit_code["StatusCode"]
 
             # Exit if exit code
-            if exit_code not in [0, None]:
-                print(container.logs().decode())
-                print('Child process for container %s raised exception %d' % (container.short_id, exit_code))
-                if blacklist:
-                    query_args = blacklist_algo(algo, build_args, query_args, args, err=container.logs().decode())
-                    continue
+            assert exit_code in [0, None]
         except:
             print('Container.wait for container %s failed with exception' % container.short_id)
             print('Invoked with %s' % cmd)
             traceback.print_exc()
             if blacklist:
-                query_args = blacklist_algo(algo, build_args, query_args, args, err=cmd)
+                if separate_queries:
+                    blacklist_algo(algo, build_args, json.loads(query_args_str), args, err=container.logs().decode())
+                else:
+                    query_args = blacklist_algo(algo, build_args, query_args, args, err=container.logs().decode())
                 continue
         finally:
             container.remove(force=True)
@@ -129,7 +141,7 @@ def run_worker(args, queue, i):
         if not args.no_docker:
             run_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"],
                 args.reps, args.query_set, build_args, query_args,
-                bw, args.kde_value, args.timeout, args.blacklist, args)
+                bw, args.kde_value, args.timeout, args.blacklist, algo_def.get("separate-queries", False), args)
         else:
             run_no_docker(cpu_limit, mem_limit, args.dataset, algo, kernel, algo_def["docker"], algo_def["wrapper"], algo_def["constructor"],
                 args.reps, args.query_set, build_args, query_args,
