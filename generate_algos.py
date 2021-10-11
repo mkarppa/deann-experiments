@@ -60,14 +60,16 @@ if __name__ == '__main__':
             'constructor' : 'HBEEstimator',
             'query' : query_args_hbe,
             'wrapper' : 'hbe',
-            'docker' : 'deann-experiments-hbe'
+            'docker' : 'deann-experiments-hbe',
+            'separate-queries' : True
         },
         'rs' : {
             'args' : { 'binary' : 'hbe' },
             'constructor' : 'RSEstimator',
             'query' : query_args_hbe,
             'wrapper' : 'hbe',
-            'docker' : 'deann-experiments-hbe'
+            'docker' : 'deann-experiments-hbe',
+            'separate-queries' : True
         },
         'sklearn-balltree' : {
             'constructor' : 'SklearnBallTreeEstimator',
