@@ -112,7 +112,8 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
                 continue
         finally:
             container.remove(force=True)
-        break
+        if not separate_queries or len(query_args) == 0:
+            break
 
 def run_no_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper, constructor, reps, query_set,
     build_args, query_args, bw, mu):
