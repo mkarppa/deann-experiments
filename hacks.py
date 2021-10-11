@@ -12,9 +12,12 @@ def filter_hbe(dataset, query_set, mu, run):
                 d[_tau] = _eps
             d[_tau] = max(d[_tau], _eps)
     print(d)
+    # print(tau,eps)
     for _tau, _eps in d.items():
-        if _tau <= tau and eps <= _eps:
+        if tau <= _tau and eps <= _eps:
+            # print('skipping ({},{})'.format(tau,eps))
             return True # skip run because we have seen a 'faster run' that timed out
+    # print('not skipping ({},{})'.format(tau,eps))
     return False
 
 
