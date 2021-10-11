@@ -22,7 +22,7 @@ if __name__ == '__main__':
     query_args_hbe = list(sorted([[eps,tau] for (eps,tau) in product(epsilons,taus)], key=itemgetter(1), reverse=True))
 
     ls = [int(round(10*sqrt(2)**i)) for i in range(10)]
-    trs = [round(0.05*i,4) for i in range(11)]
+    trs = list(reversed([round(0.05*i,4) for i in range(11)]))
     query_args_sklearn = [[l,0.0,tr] for (l,tr) in product(ls,trs)]
 
     algos = {
@@ -75,13 +75,15 @@ if __name__ == '__main__':
             'constructor' : 'SklearnBallTreeEstimator',
             'query' : query_args_sklearn,
             'wrapper' : 'sklearn',
-            'docker' : 'deann-experiments-sklearn'
+            'docker' : 'deann-experiments-sklearn',
+            'separate-queries' : True
         },
         'sklearn-kdtree' : {
             'constructor' : 'SklearnKDTreeEstimator',
             'query' : query_args_sklearn,
             'wrapper' : 'sklearn',
-            'docker' : 'deann-experiments-sklearn'
+            'docker' : 'deann-experiments-sklearn',
+            'separate-queries' : True
         }
     }
     print(yaml.dump(algos))
