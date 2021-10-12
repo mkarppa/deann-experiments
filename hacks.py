@@ -49,30 +49,53 @@ def filter_sklearn(dataset, query_set, mu, run, algo):
         return False
 
 
+def filter_askit(dataset, query_set, mu, run):
+    print(dataset, query_set, mu, run)
+    _, id_tol, max_points, _ = run
+    print(id_tol,max_points)
+    d = {}
+    for f in get_all_results(dataset, 'askit', query_set, mu):
+        if 'err' in f.attrs:
+            params = f.attrs['params']
+            params = params.split("_")[1][1:-1]
+            params = params.split(',')
+            _id_tol = float(params[1])
+            _max_points = float(params[2])
+            if _max_points not in d:
+                d[_max_points] = _id_tol
+            d[_max_points] = max(d[_max_points],_id_tol)
+    print(d)
+    for _max_points, _id_tol in d.items():
+        if max_points <= max_points and id_tol <= _id_tol:
+            return True # skip run because we have seen a 'faster run' that timed out
+    return False
+
 def filter_run(algo, dataset, query_set, mu, run):
     if algo in ["hbe", 'rs']:
         return filter_hbe(dataset, query_set, mu, run, algo)
     elif algo in ['sklearn-kdtree', 'sklearn-balltree']:
         return filter_sklearn(dataset, query_set, mu, run, algo)
+    elif algo in ['askit']:
+        return filter_askit(dataset, query_set, mu, run)
         
     return False
 
-def filter_runs_deann(algo, dataset, query_set, mu, query_args):
-    assert algo in ['naive', 'rsp', 'random-sampling', 'ann-faiss', 'ann-permuted-faiss']
-    if algo in ['naive', 'rsp', 'ann-permuted-faiss']:
+def filter_runs(algo, dataset, query_set, mu, query_args):
+    if algo not in ['naive', 'rsp', 'random-sampling', 'ann-faiss', 'ann-permuted-faiss']:
+        return query_args
+    if algo in ['naive']:
         return query_args
     with h5py.File(f'data/{dataset}.hdf5','r') as f:
         n,d = f['train'].shape
 
     new_args = list()
-    if algo == 'ann-faiss':
+    if algo in ['ann-permuted-faiss', 'ann-faiss']:
         for (k,m,nl,nq) in query_args:
             if k+m > n:
                 continue
             else:
                 new_args.append([k,m,nl,nq])
-    else:
-        assert algo == 'random-sampling'
+    elif algo in ['rsp', 'random-sampling']:
         for m in query_args:
             if m > n:
                 continue
