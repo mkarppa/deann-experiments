@@ -81,9 +81,9 @@ class Askit(BaseEstimator):
     def cmd(self,):
         cmd = ['askit_deann_wrapper.exe',
             '-training_data', f'{self.data_dir}/{self.dataset}.train.data',
-            '-test_data', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validate"}.data',
+            '-test_data', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validation"}.data',
             '-training_knn_file', f'{self.data_dir}/{self.dataset}.train.knn',
-            '-test_knn_file', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validate"}.knn',
+            '-test_knn_file', f'{self.data_dir}/{self.dataset}.{"test" if self.query_set == "test" else "validation"}.knn',
             '-d', f'{self.d}',
             '-training_N', f'{self.n}',
             '-h', f'{self.h}',
@@ -91,7 +91,7 @@ class Askit(BaseEstimator):
             '-oversampling', f'{self.oversampling}',
             '-id_tol', f'{self.id_tol}',
             '-test_N', f'500']
-
+        
         return cmd
 
     def __str__(self):
