@@ -51,7 +51,7 @@ def filter_sklearn(dataset, query_set, mu, run, algo):
 
 def filter_askit(dataset, query_set, mu, run):
     print(dataset, query_set, mu, run)
-    _, id_tol, max_points, _ = run
+    _, id_tol, max_points, _, _, _, _, _ = run
     print(id_tol,max_points)
     d = {}
     for f in get_all_results(dataset, 'askit', query_set, mu):
@@ -77,7 +77,7 @@ def filter_run(algo, dataset, query_set, mu, run):
         return filter_sklearn(dataset, query_set, mu, run, algo)
     elif algo in ['askit']:
         return filter_askit(dataset, query_set, mu, run)
-        
+
     return False
 
 def filter_runs(algo, dataset, query_set, mu, query_args):
