@@ -14,8 +14,10 @@ askit:
   constructor: Askit 
   wrapper: askit 
   docker: deann-experiments-askit
+  separate-queries: True
   query:
-  - [[0, 10], [0.00001, 0.001], [512], [1, 5]] 
+      #- [[100], [0.00001, 0.001], [512], [5], [2048], [2], [0], [2]] 
+  - [[100], [0.00001, 0.001], [512], [5], [512, 2048, 8096], [2, 4, 16], [0, 10], [2, 4, 10]] 
 hbe:
   args:
     binary: hbe
