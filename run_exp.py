@@ -21,7 +21,7 @@ import docker
 import traceback
 import psutil
 
-from hacks import filter_run, filter_runs_deann
+from hacks import filter_run, filter_runs
 
 def blacklist_algo(algo, build_args, query_args, args, err):
     # blacklist the first query argument which doesn't exist as a file
@@ -54,7 +54,7 @@ def run_docker(cpu_limit, mem_limit, dataset, algo, kernel, docker_tag, wrapper,
             if filter_run(algo, dataset, query_set, mu, run):
                 continue
         else:
-            query_args = filter_runs_deann(algo, dataset, query_set, mu, query_args)
+            query_args = filter_runs(algo, dataset, query_set, mu, query_args)
             query_args_str = json.dumps(query_args)
 
         # quit()
