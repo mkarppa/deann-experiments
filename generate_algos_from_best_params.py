@@ -70,12 +70,13 @@ if __name__ == '__main__':
                     }
                 elif algo in ['hbe', 'rs']:
                     constructor = 'HBEEstimator' if algo == 'hbe' else 'RSEstimator'
-                    query_args = list(map(float,row['params'].split('_')[1].strip('[]').split(',')))
+                    query_args = [list(map(float,row['params'].split('_')[1].strip('[]').split(',')))]
                     algos[algo] = {
                         'args' : { 'binary' : 'hbe' },
                         'constructor' : constructor,
                         'wrapper' : 'hbe',
                         'docker' : 'deann-experiments-hbe',
+                        'query' : query_args,
                         'separate-queries' : True
                     }
                 else:
