@@ -23,6 +23,11 @@ for ds in scale:
             oversampling = 2
             max_points = [512, 2048]
             k = [100]
+            id_rank = [512]
+            skel_targets = [2]
+            num_uniform_required = [0]
+            min_skel_level = [2, 10, 20]
+
 
             d = {
                 "askit" : {
@@ -30,7 +35,7 @@ for ds in scale:
                     "wrapper": "askit",
                     "docker": "deann-experiments-askit",
                     "separate-queries": True,
-                    "query": [[k, id_tol, max_points, [oversampling]]]
+                    "query": [[k, id_tol, max_points, [oversampling], id_rank, skel_targets, num_uniform_required, min_skel_level]]
                 }
             }
 
