@@ -18,7 +18,8 @@ if not os.path.exists("definitions"):
 
 for ds in scale:
     for h in [0.01, 0.001, 0.0001, 0.00001]:
-        with open(os.path.join("definitions", f'askit_{ds}_{h}.yaml'), "w") as f:
+        h_str = f'{h:f}'.rstrip('0')
+        with open(os.path.join("definitions", f'askit_{ds}_{h_str}.yaml'), "w") as f:
             id_tol = [scale[ds] * h, scale[ds] * h / 10]
             oversampling = 2
             max_points = [512, 2048]
