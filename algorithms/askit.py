@@ -69,7 +69,7 @@ class Askit(BaseEstimator):
                     processed_results['id'].append(id)
                     processed_results['est'].append(float(m.group(2)))
                     processed_results['samples'].append(float(m.group(3)))
-                    processed_results['time'].append(float(m.group(4)))
+                    processed_results['time'].append(1000 * float(m.group(4))) # askit reports in seconds
                 m = re.match(r"BUILD TIME: (\S+)", line)
                 if m:
                     self.build_time = float(m.group(1))
@@ -95,7 +95,7 @@ class Askit(BaseEstimator):
             '-num_uniform', f'{self.num_uniform_required}',
             '-min_skel_level', f'{self.min_skel_level}',
             '-test_N', f'500']
-        
+
         return cmd
 
     def __str__(self):
