@@ -15,7 +15,8 @@ if __name__ == '__main__':
     n_lists = [1<<i for i in range(5,13)]
     n_query = 1
 
-    query_args = list(sorted([[mk,mk,n_list,1] for (mk,n_list) in product(mks,n_lists)], key=itemgetter(2)))
+    # query_args = list(sorted([[mk,mk,n_list,1] for (mk,n_list) in product(mks,n_lists)], key=itemgetter(2)))
+    query_args = list(sorted([[k,m,n_list,1] for (k,m,n_list) in product(mks,mks,n_lists)], key=itemgetter(2)))
 
     epsilons = np.round(np.arange(1.5,0.05,-0.05),5).tolist()
     taus = np.round([0.01 / sqrt(2)**i for i in range(20)],5).tolist()
@@ -75,15 +76,13 @@ if __name__ == '__main__':
             'constructor' : 'SklearnBallTreeEstimator',
             'query' : query_args_sklearn,
             'wrapper' : 'sklearn',
-            'docker' : 'deann-experiments-sklearn',
-            'separate-queries' : True
+            'docker' : 'deann-experiments-sklearn'
         },
         'sklearn-kdtree' : {
             'constructor' : 'SklearnKDTreeEstimator',
             'query' : query_args_sklearn,
             'wrapper' : 'sklearn',
-            'docker' : 'deann-experiments-sklearn',
-            'separate-queries' : True
+            'docker' : 'deann-experiments-sklearn'
         }
     }
     print(yaml.dump(algos))
