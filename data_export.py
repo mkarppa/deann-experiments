@@ -45,9 +45,13 @@ if __name__ == "__main__":
                 ground_truth = np.array(g[ground_truth_gaussian_str])
                 # an ugly kludge to remove NaNs
                 # ground_truth[ground_truth == 0.0] = np.finfo(np.float32).tiny
-                ground_truth[ground_truth < 1e-16] = 1e-16
-                err_array = np.abs(np.array(f['estimates']) - ground_truth[:,None])/ground_truth[:,None]
-
+                # ground_truth[ground_truth < 1e-16] = 1e-16
+                idx = ~(ground_truth < 1e-16)
+                # idx = np.ones(ground_truth.shape) == 1
+                est = np.array(f['estimates'])[idx]
+                ground_truth = ground_truth[idx]
+                err_array = np.abs(est - ground_truth[:,None])/ground_truth[:,None]
+                
                 # this is a very ugly kludge
                 # print(err_array)
                 # if algorithm.startswith('sklearn') and 'atol=0.0,' in f.attrs['params']:
