@@ -44,7 +44,7 @@ class Askit(BaseEstimator):
             return res
 
     def set_query_param(self, args):
-        self.k, self.id_tol, self.max_points, self.oversampling = args
+        self.k, self.id_tol, self.max_points, self.oversampling, self.id_rank, self.num_skel_targets, self.num_uniform_required, self.min_skel_level = args
 
     def process_results(self, results):
         regex = r"RESULT id=(\d+) est=(\S+) samples=(.*) time=(\S+)"
@@ -90,6 +90,10 @@ class Askit(BaseEstimator):
             '-max_points', f'{self.max_points}',
             '-oversampling', f'{self.oversampling}',
             '-id_tol', f'{self.id_tol}',
+            '-id_rank', f'{self.id_rank}',
+            '-num_skel', f'{self.num_skel_targets}',
+            '-num_uniform', f'{self.num_uniform_required}',
+            '-min_skel_level', f'{self.min_skel_level}',
             '-test_N', f'500']
         
         return cmd
