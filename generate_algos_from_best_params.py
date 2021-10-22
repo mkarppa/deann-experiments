@@ -49,8 +49,12 @@ if __name__ == '__main__':
                     }
                 elif algo == 'askit':
                     query_args = row['params'].split('_')[1].strip('[]').split(',')
+                    assert len(query_args) == 8
                     query_args = [[int(query_args[0]), float(query_args[1]), int(query_args[2]),
-                                   int(query_args[3])]]
+                                   int(query_args[3]), int(query_args[4]), int(query_args[5]),
+                                   int(query_args[6]), int(query_args[7])]]
+                    assert len(query_args) == 1
+                    assert len(query_args[0]) == 8
                     algos[algo] = {
                         'constructor' : 'Askit',
                         'docker' : 'deann-experiments-askit',
