@@ -1,5 +1,4 @@
 from result import get_all_results
-import numpy as np
 import h5py
 
 def filter_hbe(dataset, query_set, mu, run, algo = 'hbe'):
