@@ -10,14 +10,14 @@ ann-permuted-faiss:
   docker: deann-experiments-deann
   query:
   - [[10, 50], [0, 50, 100], [512], [1, 5, 10, 50]]
-askit:
-  constructor: Askit 
-  wrapper: askit 
-  docker: deann-experiments-askit
-  separate-queries: True
-  query:
-      #- [[100], [0.00001, 0.001], [512], [5], [2048], [2], [0], [2]] 
-  - [[100], [0.00001, 0.001], [512], [5], [512, 2048, 8096], [2, 4, 16], [0, 10], [2, 4, 10]] 
+#askit:
+#  constructor: Askit 
+#  wrapper: askit 
+#  docker: deann-experiments-askit
+#  separate-queries: True
+#  query:
+#      #- [[100], [0.00001, 0.001], [512], [5], [2048], [2], [0], [2]] 
+#  - [[100], [0.00001, 0.001], [512], [5], [512, 2048, 8096], [2, 4, 16], [0, 10], [2, 4, 10]] 
 hbe:
   args:
     binary: hbe
@@ -30,6 +30,7 @@ hbe:
 naive:
   constructor: Naive
   wrapper: deann_wrapper
+  docker: deann-experiments-deann
 
 sklearn-balltree:
   constructor: SklearnBallTreeEstimator
