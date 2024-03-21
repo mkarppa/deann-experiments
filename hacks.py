@@ -95,7 +95,7 @@ def filter_runs(algo, dataset, query_set, mu, query_args):
                 continue
             else:
                 new_args.append([k,m,nl,nq])
-    elif algo in ['rsp', 'random-sampling']:
+    elif algo in ['rsp', 'rs']:
         for m in query_args:
             if m > n:
                 continue

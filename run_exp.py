@@ -252,7 +252,7 @@ def main():
 
     exps = {}
 
-    # generate all experiments and remove the once that are already there
+    # generate all experiments and remove the ones that are already there
     for algo in algorithms:
         _args = definitions[algo].get('args', {})
         args_str = json.dumps(_args)

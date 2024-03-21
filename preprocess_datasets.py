@@ -787,7 +787,6 @@ DATASETS = {
 }
 
 
-
 def create_dataset(dataset, kernel, compute_bandwidth=True):
     fn = get_dataset_fn(dataset)
 
